@@ -15,7 +15,7 @@ abstract class AParser implements IParser
 	 *
 	 * @var array
 	 */
-	final protected $_selectorParseList = array(
+	protected $_selectorParseList = array(
 		'universal'     => '/^(\*)/',
 		'descendant'   => '/^( )/',
 		'id'           => '/^(#[a-zA-Z][\w\-]*)/',
