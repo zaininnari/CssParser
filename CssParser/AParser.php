@@ -292,7 +292,22 @@ abstract class AParser implements IParser
 		return $method;
 	}
 
-
+	/**
+	 * propertyをチェックするメソッドを呼ぶ。
+	 * メソッドが存在しない/適当でない場合、falseを返す。
+	 * 実行した結果も返す
+	 *
+	 * @param string $property css property
+	 * @param string $value    css value
+	 *
+	 * @return boolean
+	 */
+	protected function callPropertyMethod($property, $value)
+	{
+		$method = $this->getPropertyMethod($property);
+		if ($method === false) return false; // メソッドが存在しない/適当でない
+		return call_user_func_array(array($this, $method), $value);
+	}
 
 	/**
 	 * セレクタのチェックをする。
@@ -506,7 +521,7 @@ abstract class AParser implements IParser
 	 */
 	protected function propertyMarginRight($val)
 	{
-		return $this->propertyMarginTop($val);
+		return $this->callPropertyMethod('margin-top', $val);
 	}
 
 	/**
@@ -518,7 +533,7 @@ abstract class AParser implements IParser
 	 */
 	protected function propertyMarginBottom($val)
 	{
-		return $this->propertyMarginTop($val);
+		return $this->callPropertyMethod('margin-top', $val);
 	}
 
 	/**
@@ -530,7 +545,7 @@ abstract class AParser implements IParser
 	 */
 	protected function propertyMarginLeft($val)
 	{
-		return $this->propertyMarginTop($val);
+		return $this->callPropertyMethod('margin-top', $val);
 	}
 
 	/**
@@ -544,7 +559,7 @@ abstract class AParser implements IParser
 	{
 		$arr = preg_split('/\s* \s*/', $val, -1, PREG_SPLIT_NO_EMPTY);
 		if(count($arr) > 4) return false;
-		foreach ($arr as $v) if(!$this->propertyMarginTop($v)) return false;
+		foreach ($arr as $v) if(!$this->callPropertyMethod('margin-top', $v)) return false;
 		return true;
 	}
 
@@ -570,7 +585,7 @@ abstract class AParser implements IParser
 	 */
 	protected function propertyPaddingRight($val)
 	{
-		return $this->propertyPaddingTop($val);
+		return $this->callPropertyMethod('padding-top', $val);
 	}
 
 	/**
@@ -582,7 +597,7 @@ abstract class AParser implements IParser
 	 */
 	protected function propertyPaddingBottom($val)
 	{
-		return $this->propertyPaddingTop($val);
+		return $this->callPropertyMethod('padding-top', $val);
 	}
 
 	/**
@@ -594,7 +609,7 @@ abstract class AParser implements IParser
 	 */
 	protected function propertyPaddingLeft($val)
 	{
-		return $this->propertyPaddingTop($val);
+		return $this->callPropertyMethod('padding-top', $val);
 	}
 
 	/**
@@ -608,7 +623,7 @@ abstract class AParser implements IParser
 	{
 		$arr = preg_split('/\s* \s*/', $val, -1, PREG_SPLIT_NO_EMPTY);
 		if(count($arr) > 4) return false;
-		foreach ($arr as $v) if(!$this->propertyPaddingTop($v)) return false;
+		foreach ($arr as $v) if(!$this->callPropertyMethod('padding-top', $v)) return false;
 		return true;
 	}
 
@@ -634,7 +649,7 @@ abstract class AParser implements IParser
 	 */
 	protected function propertyBorderRightWidth($val)
 	{
-		return $this->propertyBorderTopWidth($val);
+		return $this->callPropertyMethod('border-top-width', $val);
 	}
 
 	/**
@@ -646,7 +661,7 @@ abstract class AParser implements IParser
 	 */
 	protected function propertyBorderBottomWidth($val)
 	{
-		return $this->propertyBorderTopWidth($val);
+		return $this->callPropertyMethod('border-top-width', $val);
 	}
 
 	/**
@@ -658,7 +673,7 @@ abstract class AParser implements IParser
 	 */
 	protected function propertyBorderLeftWidth($val)
 	{
-		return $this->propertyBorderTopWidth($val);
+		return $this->callPropertyMethod('border-top-width', $val);
 	}
 
 	/**
@@ -672,7 +687,7 @@ abstract class AParser implements IParser
 	{
 		$arr = preg_split('/\s* \s*/', $val, -1, PREG_SPLIT_NO_EMPTY);
 		if(count($arr) > 4) return false;
-		foreach ($arr as $v) if(!$this->propertyBorderTopWidth($v)) return false;
+		foreach ($arr as $v) if(!$this->callPropertyMethod('border-top-width', $v)) return false;
 		return true;
 	}
 
@@ -698,7 +713,7 @@ abstract class AParser implements IParser
 	 */
 	protected function propertyBorderRightColor($val)
 	{
-		return $this->propertyBorderTopColor($val);
+		return $this->callPropertyMethod('border-top-color', $val);
 	}
 
 	/**
@@ -710,7 +725,7 @@ abstract class AParser implements IParser
 	 */
 	protected function propertyBorderBottomColor($val)
 	{
-		return $this->propertyBorderTopColor($val);
+		return $this->callPropertyMethod('border-top-color', $val);
 	}
 
 	/**
@@ -722,7 +737,7 @@ abstract class AParser implements IParser
 	 */
 	protected function propertyBorderLeftColor($val)
 	{
-		return $this->propertyBorderTopColor($val);
+		return $this->callPropertyMethod('border-top-color', $val);
 	}
 
 	/**
@@ -736,7 +751,7 @@ abstract class AParser implements IParser
 	{
 		$arr = preg_split('/\s* \s*/', $val, -1, PREG_SPLIT_NO_EMPTY);
 		if(count($arr) > 4) return false;
-		foreach ($arr as $v) if(!$this->propertyBorderTopColor($v)) return false;
+		foreach ($arr as $v) if(!$this->callPropertyMethod('border-top-color', $v)) return false;
 		return true;
 	}
 
@@ -762,7 +777,7 @@ abstract class AParser implements IParser
 	 */
 	protected function propertyBorderRightStyle($val)
 	{
-		return $this->propertyBorderTopStyle($val);
+		return $this->callPropertyMethod('border-top-style', $val);
 	}
 
 	/**
@@ -774,7 +789,7 @@ abstract class AParser implements IParser
 	 */
 	protected function propertyBorderBottomStyle($val)
 	{
-		return $this->propertyBorderTopStyle($val);
+		return $this->callPropertyMethod('border-top-style', $val);
 	}
 
 	/**
@@ -786,7 +801,7 @@ abstract class AParser implements IParser
 	 */
 	protected function propertyBorderLeftStyle($val)
 	{
-		return $this->propertyBorderTopStyle($val);
+		return $this->callPropertyMethod('border-top-style', $val);
 	}
 
 	/**
@@ -800,7 +815,7 @@ abstract class AParser implements IParser
 	{
 		$arr = preg_split('/\s* \s*/', $val, -1, PREG_SPLIT_NO_EMPTY);
 		if(count($arr) > 4) return false;
-		foreach ($arr as $v) if(!$this->propertyBorderTopStyle($v)) return false;
+		foreach ($arr as $v) if(!$this->callPropertyMethod('border-top-style', $v)) return false;
 		return true;
 	}
 
@@ -814,15 +829,15 @@ abstract class AParser implements IParser
 	protected function propertyBorderTop($val)
 	{
 		$values = preg_split('/\s* \s*/', $val, -1, PREG_SPLIT_NO_EMPTY);
-		$regArr = array('propertyBorderTopWidth', 'propertyBorderTopStyle', 'color');
-		// 4個以上はありえない
-		if (count($values) > 3) return false;
+		$regArr = array('border-top-width', 'border-top-style', 'color');
+
+		if (count($values) > 3) return false; // 4個以上はありえない
 		// 1個の場合は、別途処理
 		if (count($values) === 1 && preg_match('/^inherit$/i', $values[0])) return true;
 		foreach ($values as $i => $value) {
 			$before = count($regArr);
 			foreach ($regArr as $n => $reg) {
-				if ($this->{$reg}($value)) {
+				if ($this->callPropertyMethod($reg, $value)) {
 					unset($regArr[$n]);
 					break;
 				}
@@ -841,7 +856,7 @@ abstract class AParser implements IParser
 	 */
 	protected function propertyBorderRight($val)
 	{
-		return $this->propertyBorderTop($val);
+		return $this->callPropertyMethod('border-top', $val);
 	}
 
 	/**
@@ -853,7 +868,7 @@ abstract class AParser implements IParser
 	 */
 	protected function propertyBorderBottom($val)
 	{
-		return $this->propertyBorderTop($val);
+		return $this->callPropertyMethod('border-top', $val);
 	}
 
 	/**
@@ -865,7 +880,7 @@ abstract class AParser implements IParser
 	 */
 	protected function propertyBorderLeft($val)
 	{
-		return $this->propertyBorderTop($val);
+		return $this->callPropertyMethod('border-top', $val);
 	}
 
 	/**
@@ -877,7 +892,7 @@ abstract class AParser implements IParser
 	 */
 	protected function propertyBorder($val)
 	{
-		return $this->propertyBorderTop($val);
+		return $this->callPropertyMethod('border-top', $val);
 	}
 
 	/**

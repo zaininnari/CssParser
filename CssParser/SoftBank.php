@@ -220,13 +220,13 @@ class SoftBank extends AParser
 	protected function propertyListStyle($val)
 	{
 		$values = preg_split('/\s* \s*/', $val, -1, PREG_SPLIT_NO_EMPTY);
-		$regArr = array('propertyListStyleType', 'propertyListStyleImage', 'propertyListStyle');
+		$regArr = array('list-style-type', 'list-style-image', 'list-style');
 
 		if (count($values) > 3) return false; // 4個以上はありえない
 		foreach ($values as $i => $value) {
 			$before = count($regArr);
 			foreach ($regArr as $n => $reg) {
-				if ($this->{$reg}($value)) {
+				if ($this->callPropertyMethod($reg, $value)) {
 					unset($regArr[$n]);
 					break;
 				}
@@ -326,46 +326,30 @@ class SoftBank extends AParser
 	protected function propertyBackground($val)
 	{
 		$values = preg_split('/\s* \s*/', $val, -1, PREG_SPLIT_NO_EMPTY);
-		$regArr = array('propertyBackgroundColor', 'propertyBackgroundImage',
-			'propertyBackgroundRepeat', 'propertyBackgroundAttachment', 'propertyBackgroundPosition'
+		$regArr = array('background-color', 'background-image',
+			'background-repeat', 'background-attachment', 'background-position'
 		);
 
 		if (count($values) > 7) return false; // 6個以上はありえない
-		if (count($values) === 6) {
-			for ($i = 0; $i < count($values); $i++) {
-				$before = count($regArr);
-				foreach ($regArr as $n => $reg) {
-					if ($this->{$reg}($values[$i])) {
-						if ($reg === 'propertyBackgroundPosition') {
-							if (count($values) < 6 && $this->{$reg}($values[$i+1])) {
-								$i++;
-							} else {
-								return false;
-							}
+
+		for ($i = 0; $i < count($values); $i++) {
+			$before = count($regArr);
+			foreach ($regArr as $n => $reg) {
+				if ($this->callPropertyMethod($reg, $values[$i])) {
+					if ($reg === 'background-position') {
+						if (count($values) < 6 && $this->callPropertyMethod($reg, $values[$i+1])) {
+							$i++;
+						} else {
+							if (count($values) === 6) return false;
 						}
-						unset($regArr[$n]);
-						break;
 					}
+					unset($regArr[$n]);
+					break;
 				}
-				if (count($regArr) === $before) return false;
 			}
-		} else {
-			for ($i = 0; $i < count($values); $i++) {
-				$before = count($regArr);
-				foreach ($regArr as $n => $reg) {
-					if ($this->{$reg}($values[$i])) {
-						if ($reg === 'propertyBackgroundPosition') {
-							if (count($values) < 6 && $this->{$reg}($values[$i+1])) {
-								$i++;
-							}
-						}
-						unset($regArr[$n]);
-						break;
-					}
-				}
-				if (count($regArr) === $before) return false;
-			}
+			if (count($regArr) === $before) return false;
 		}
+
 		return true;
 	}
 
@@ -454,12 +438,7 @@ class SoftBank extends AParser
 	{
 		// font-family内の半角空白をエスケープ
 		$val = preg_replace('/([\"\'].*?) (.*?[\"\'])/', '$1&nbsp;$2', $val);
-		$regArr = array('font-style', 'font-variant', 'font-weight', 'font-size', 'font-family');
-		$regArr = $this->getPropertyMethod($regArr); // メソッド名を取得
-		if ($regArr === false) return false; // メソッドがない場合、失敗する
-		$fontFamily = array_pop($regArr); // 'font-family'メソッド名を取得
-		$font_size = array_pop($regArr); // 'font-size'メソッド名を取得
-
+		$regArr = array('font-style', 'font-variant', 'font-weight');
 		$values = preg_split('/\s* \s*/', $val, -1, PREG_SPLIT_NO_EMPTY); // 半角空白で分割
 
 		if (count($values) > 5) return $val; // 6個以上はありえない
@@ -468,11 +447,11 @@ class SoftBank extends AParser
 			for ($i=0;$i<$secondLast;$i++) {
 				$before = count($regArr);
 				if ($i === $secondLast - 1) { //最後から2番目は、sizeも加える
-					$regArr[] = $font_size;
+					$regArr[] = 'font-size';
 					$before = count($regArr); // 再カウント
 				}
 				foreach ($regArr as $j => $reg) {
-					if ($this->{$reg}($values[$i])) {
+					if ($this->callPropertyMethod($reg, $values[$i])) {
 						unset($regArr[$j]);
 						break;
 					}
@@ -481,7 +460,7 @@ class SoftBank extends AParser
 			}
 		}
 		// 最後尾は'font-family'
-		if($this->{$fontFamily}(array_pop($values)) === false) return false;
+		if($this->callPropertyMethod('font-family', array_pop($values)) === false) return false;
 		return true;
 	}
 
@@ -567,7 +546,7 @@ class SoftBank extends AParser
 	 */
 	protected function propertyWordSpacing($val)
 	{
-		return propertyLetterSpacing($val);
+		return $this->callPropertyMethod('letter-spacing', $val);
 	}
 
 	/**
