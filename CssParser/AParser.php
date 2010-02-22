@@ -15,7 +15,7 @@ abstract class AParser implements IParser
 	 *
 	 * @var array
 	 */
-	protected $_selectorParseList = array(
+	protected $selectorParseListOrigin = array(
 		'universal'     => '/^(\*)/',
 		'descendant'   => '/^( )/',
 		'id'           => '/^(#[a-zA-Z][\w\-]*)/',
@@ -40,7 +40,7 @@ abstract class AParser implements IParser
 	protected $removeSelectorParseList = array();
 
 	/**
-	 * $_selectorParseList から
+	 * $selectorParseListOrigin から
 	 * $removeSelectorParseList のリストを取り除いたもの
 	 *
 	 * @var array
@@ -86,7 +86,7 @@ abstract class AParser implements IParser
 		}
 
 		// セレクタのリストを対応するCSSのレベルに合わせる
-		$_selectorParseList = $this->_selectorParseList;
+		$_selectorParseList = $this->selectorParseListOrigin;
 		foreach ($this->removeSelectorParseList as $remove) {
 			if (isset($_selectorParseList[$remove])) {
 				unset($_selectorParseList[$remove]);
@@ -268,7 +268,7 @@ abstract class AParser implements IParser
 	 *
 	 * @return string|false
 	 */
-	final protected function getPropertyMethod($property)
+	protected function getPropertyMethod($property)
 	{
 		if (is_array($property)) {
 			$method = array();
@@ -278,11 +278,11 @@ abstract class AParser implements IParser
 				$method[] = $_method;
 			}
 		} else {
-			$property = call_user_func(
-				create_function('$s', '$s{0}=strtoupper($s{0});return $s;'), trim($property)
-			);
+			$property = explode('-', trim($property));
+			array_walk($property, create_function('&$s', '$s{0}=strtoupper($s{0});return $s;'));
+			$property = implode('', $property);
 			$method = $this->propertyMethodPrefix . str_replace('-', '_', $property);
-			if ($method === $this->propertyMethodPrefix // メソッド名が適切でない
+			if ($method === $this->propertyMethodPrefix   // メソッド名が適切でない
 				|| !preg_match(self::METHOD, $method)       // メソッド名が適切でない
 				|| method_exists($this, $method) === false  // メソッド(cssプロパティ)が存在しない
 			) {
@@ -491,7 +491,7 @@ abstract class AParser implements IParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyMargin_top($val)
+	protected function propertyMarginTop($val)
 	{
 		$pattern = '('.$this->length.'|'.$this->percentage.'|auto|inherit)';
 		return preg_match('/^'.$pattern.'$/i', $val);
@@ -504,9 +504,9 @@ abstract class AParser implements IParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyMargin_right($val)
+	protected function propertyMarginRight($val)
 	{
-		return $this->propertyMargin_top($val);
+		return $this->propertyMarginTop($val);
 	}
 
 	/**
@@ -516,9 +516,9 @@ abstract class AParser implements IParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyMargin_bottom($val)
+	protected function propertyMarginBottom($val)
 	{
-		return $this->propertyMargin_top($val);
+		return $this->propertyMarginTop($val);
 	}
 
 	/**
@@ -528,9 +528,9 @@ abstract class AParser implements IParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyMargin_left($val)
+	protected function propertyMarginLeft($val)
 	{
-		return $this->propertyMargin_top($val);
+		return $this->propertyMarginTop($val);
 	}
 
 	/**
@@ -544,7 +544,7 @@ abstract class AParser implements IParser
 	{
 		$arr = preg_split('/\s* \s*/', $val, -1, PREG_SPLIT_NO_EMPTY);
 		if(count($arr) > 4) return false;
-		foreach ($arr as $v) if(!$this->propertyMargin_top($v)) return false;
+		foreach ($arr as $v) if(!$this->propertyMarginTop($v)) return false;
 		return true;
 	}
 
@@ -555,7 +555,7 @@ abstract class AParser implements IParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyPadding_top($val)
+	protected function propertyPaddingTop($val)
 	{
 		$pattern = '('.$this->lengthPlus.'|'.$this->percentagePlus.'|inherit)';
 		return preg_match('/^'.$pattern.'$/i', $val);
@@ -568,9 +568,9 @@ abstract class AParser implements IParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyPadding_right($val)
+	protected function propertyPaddingRight($val)
 	{
-		return $this->propertyPadding_top($val);
+		return $this->propertyPaddingTop($val);
 	}
 
 	/**
@@ -580,9 +580,9 @@ abstract class AParser implements IParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyPadding_bottom($val)
+	protected function propertyPaddingBottom($val)
 	{
-		return $this->propertyPadding_top($val);
+		return $this->propertyPaddingTop($val);
 	}
 
 	/**
@@ -592,9 +592,9 @@ abstract class AParser implements IParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyPadding_left($val)
+	protected function propertyPaddingLeft($val)
 	{
-		return $this->propertyPadding_top($val);
+		return $this->propertyPaddingTop($val);
 	}
 
 	/**
@@ -608,7 +608,7 @@ abstract class AParser implements IParser
 	{
 		$arr = preg_split('/\s* \s*/', $val, -1, PREG_SPLIT_NO_EMPTY);
 		if(count($arr) > 4) return false;
-		foreach ($arr as $v) if(!$this->propertyPadding_top($v)) return false;
+		foreach ($arr as $v) if(!$this->propertyPaddingTop($v)) return false;
 		return true;
 	}
 
@@ -619,7 +619,7 @@ abstract class AParser implements IParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyBorder_top_width($val)
+	protected function propertyBorderTopWidth($val)
 	{
 		$pattern = '('.$this->lengthPlus.'|thin|medium|thick|inherit)';
 		return preg_match('/^'.$pattern.'$/i', $val);
@@ -632,9 +632,9 @@ abstract class AParser implements IParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyBorder_right_width($val)
+	protected function propertyBorderRightWidth($val)
 	{
-		return $this->propertyBorder_top_width($val);
+		return $this->propertyBorderTopWidth($val);
 	}
 
 	/**
@@ -644,9 +644,9 @@ abstract class AParser implements IParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyBorder_bottom_width($val)
+	protected function propertyBorderBottomWidth($val)
 	{
-		return $this->propertyBorder_top_width($val);
+		return $this->propertyBorderTopWidth($val);
 	}
 
 	/**
@@ -656,9 +656,9 @@ abstract class AParser implements IParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyBorder_left_width($val)
+	protected function propertyBorderLeftWidth($val)
 	{
-		return $this->propertyBorder_top_width($val);
+		return $this->propertyBorderTopWidth($val);
 	}
 
 	/**
@@ -668,11 +668,11 @@ abstract class AParser implements IParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyBorder_width($val)
+	protected function propertyBorderWidth($val)
 	{
 		$arr = preg_split('/\s* \s*/', $val, -1, PREG_SPLIT_NO_EMPTY);
 		if(count($arr) > 4) return false;
-		foreach ($arr as $v) if(!$this->propertyBorder_top_width($v)) return false;
+		foreach ($arr as $v) if(!$this->propertyBorderTopWidth($v)) return false;
 		return true;
 	}
 
@@ -683,7 +683,7 @@ abstract class AParser implements IParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyBorder_top_color($val)
+	protected function propertyBorderTopColor($val)
 	{
 		$pattern = '('.$this->color.'|transparent|inherit)';
 		return preg_match('/^'.$pattern.'$/i', $val);
@@ -696,9 +696,9 @@ abstract class AParser implements IParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyBorder_right_color($val)
+	protected function propertyBorderRightColor($val)
 	{
-		return $this->propertyBorder_top_color($val);
+		return $this->propertyBorderTopColor($val);
 	}
 
 	/**
@@ -708,9 +708,9 @@ abstract class AParser implements IParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyBorder_bottom_color($val)
+	protected function propertyBorderBottomColor($val)
 	{
-		return $this->propertyBorder_top_color($val);
+		return $this->propertyBorderTopColor($val);
 	}
 
 	/**
@@ -720,9 +720,9 @@ abstract class AParser implements IParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyBorder_left_color($val)
+	protected function propertyBorderLeftColor($val)
 	{
-		return $this->propertyBorder_top_color($val);
+		return $this->propertyBorderTopColor($val);
 	}
 
 	/**
@@ -732,11 +732,11 @@ abstract class AParser implements IParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyBorder_color($val)
+	protected function propertyBorderColor($val)
 	{
 		$arr = preg_split('/\s* \s*/', $val, -1, PREG_SPLIT_NO_EMPTY);
 		if(count($arr) > 4) return false;
-		foreach ($arr as $v) if(!$this->propertyBorder_top_color($v)) return false;
+		foreach ($arr as $v) if(!$this->propertyBorderTopColor($v)) return false;
 		return true;
 	}
 
@@ -747,7 +747,7 @@ abstract class AParser implements IParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyBorder_top_style($val)
+	protected function propertyBorderTopStyle($val)
 	{
 		$pattern = '(none|hidden|dotted|dashed|solid|double|groove|ridge|inset|outset|inherit)';
 		return preg_match('/^'.$pattern.'$/i', $val);
@@ -760,9 +760,9 @@ abstract class AParser implements IParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyBorder_right_style($val)
+	protected function propertyBorderRightStyle($val)
 	{
-		return $this->propertyBorder_top_style($val);
+		return $this->propertyBorderTopStyle($val);
 	}
 
 	/**
@@ -772,9 +772,9 @@ abstract class AParser implements IParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyBorder_bottom_style($val)
+	protected function propertyBorderBottomStyle($val)
 	{
-		return $this->propertyBorder_top_style($val);
+		return $this->propertyBorderTopStyle($val);
 	}
 
 	/**
@@ -784,9 +784,9 @@ abstract class AParser implements IParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyBorder_left_style($val)
+	protected function propertyBorderLeftStyle($val)
 	{
-		return $this->propertyBorder_top_style($val);
+		return $this->propertyBorderTopStyle($val);
 	}
 
 	/**
@@ -796,11 +796,11 @@ abstract class AParser implements IParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyBorder_style($val)
+	protected function propertyBorderStyle($val)
 	{
 		$arr = preg_split('/\s* \s*/', $val, -1, PREG_SPLIT_NO_EMPTY);
 		if(count($arr) > 4) return false;
-		foreach ($arr as $v) if(!$this->propertyBorder_top_style($v)) return false;
+		foreach ($arr as $v) if(!$this->propertyBorderTopStyle($v)) return false;
 		return true;
 	}
 
@@ -811,10 +811,10 @@ abstract class AParser implements IParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyBorder_top($val)
+	protected function propertyBorderTop($val)
 	{
 		$values = preg_split('/\s* \s*/', $val, -1, PREG_SPLIT_NO_EMPTY);
-		$regArr = array('propertyBorder_top_width', 'propertyBorder_top_style', 'color');
+		$regArr = array('propertyBorderTopWidth', 'propertyBorderTopStyle', 'color');
 		// 4個以上はありえない
 		if (count($values) > 3) return false;
 		// 1個の場合は、別途処理
@@ -839,9 +839,9 @@ abstract class AParser implements IParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyBorder_right($val)
+	protected function propertyBorderRight($val)
 	{
-		return $this->propertyBorder_top($val);
+		return $this->propertyBorderTop($val);
 	}
 
 	/**
@@ -851,9 +851,9 @@ abstract class AParser implements IParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyBorder_bottom($val)
+	protected function propertyBorderBottom($val)
 	{
-		return $this->propertyBorder_top($val);
+		return $this->propertyBorderTop($val);
 	}
 
 	/**
@@ -863,9 +863,9 @@ abstract class AParser implements IParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyBorder_left($val)
+	protected function propertyBorderLeft($val)
 	{
-		return $this->propertyBorder_top($val);
+		return $this->propertyBorderTop($val);
 	}
 
 	/**
@@ -877,7 +877,7 @@ abstract class AParser implements IParser
 	 */
 	protected function propertyBorder($val)
 	{
-		return $this->propertyBorder_top($val);
+		return $this->propertyBorderTop($val);
 	}
 
 	/**

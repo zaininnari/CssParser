@@ -21,7 +21,7 @@ class SoftBank extends AParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyMargin_top($val)
+	protected function propertyMarginTop($val)
 	{
 		$pattern = '('.$this->length.'|'.$this->percentage.'|auto)';
 		return preg_match('/^'.$pattern.'$/i', $val);
@@ -34,7 +34,7 @@ class SoftBank extends AParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyPadding_top($val)
+	protected function propertyPaddingTop($val)
 	{
 		// 単位指定が無い場合、「em単位」として扱う => 単位なしOK
 		$lengthNoUnit = '(?:[0-9]{1,}(¥.[0-9]+)?|¥.[0-9]+)';
@@ -49,7 +49,7 @@ class SoftBank extends AParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyBorder_top_width($val)
+	protected function propertyBorderTopWidth($val)
 	{
 		$pattern = '('.$this->lengthPlus.'|thin|medium|thick)';
 		return preg_match('/^'.$pattern.'$/i', $val);
@@ -62,7 +62,7 @@ class SoftBank extends AParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyBorder_top_color($val)
+	protected function propertyBorderTopColor($val)
 	{
 		$pattern = '('.$this->color.'|transparent)';
 		return preg_match('/^'.$pattern.'$/i', $val);
@@ -75,7 +75,7 @@ class SoftBank extends AParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyBorder_top_style($val)
+	protected function propertyBorderTopStyle($val)
 	{
 		$pattern = '(none|hidden|dotted|dashed|solid|double|groove|ridge|inset|outset)';
 		return preg_match('/^'.$pattern.'$/i', $val);
@@ -88,7 +88,7 @@ class SoftBank extends AParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyBorder_top($val)
+	protected function propertyBorderTop($val)
 	{
 		$values = preg_split('/\s* \s*/', $val, -1, PREG_SPLIT_NO_EMPTY);
 		$regArr = array('(thin|medium|thick)','(none|hidden|solid)', $this->color);
@@ -152,7 +152,7 @@ class SoftBank extends AParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyLine_height($val)
+	protected function propertyLineHeight($val)
 	{
 		$pattern = '('.$this->lengthPlus.'|'.$this->percentagePlus.'|normal)';
 		return preg_match('/^'.$pattern.'$/i', $val);
@@ -165,7 +165,7 @@ class SoftBank extends AParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyVertical_align($val)
+	protected function propertyVerticalAlign($val)
 	{
 		$pattern = '(baseline|sub|super|top|text-top|middle|bottom|text-bottom)';
 		return preg_match('/^'.$pattern.'$/i', $val);
@@ -178,7 +178,7 @@ class SoftBank extends AParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyList_style_type($val)
+	protected function propertyListStyleType($val)
 	{
 		$pattern = '(disc|circle|square|decimal|lower-roman|upper-roman|lower-alpha|upper-alpha|none)';
 		return preg_match('/^'.$pattern.'$/i', $val);
@@ -191,7 +191,7 @@ class SoftBank extends AParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyList_style_image($val)
+	protected function propertyListStyleImage($val)
 	{
 		$pattern = '('.$this->uri.'|none)';
 		return preg_match('/^'.$pattern.'$/i', $val);
@@ -204,7 +204,7 @@ class SoftBank extends AParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyList_style_position($val)
+	protected function propertyListStylePosition($val)
 	{
 		$pattern = '(inside|outside)';
 		return preg_match('/^'.$pattern.'$/i', $val);
@@ -217,10 +217,10 @@ class SoftBank extends AParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyList_style($val)
+	protected function propertyListStyle($val)
 	{
 		$values = preg_split('/\s* \s*/', $val, -1, PREG_SPLIT_NO_EMPTY);
-		$regArr = array('propertyList_style_type', 'propertyList_style_image', 'propertyList_style');
+		$regArr = array('propertyListStyleType', 'propertyListStyleImage', 'propertyListStyle');
 
 		if (count($values) > 3) return false; // 4個以上はありえない
 		foreach ($values as $i => $value) {
@@ -243,7 +243,7 @@ class SoftBank extends AParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyBackground_color($val)
+	protected function propertyBackgroundColor($val)
 	{
 		$pattern = '('.$this->color.'|transparent)';
 		return preg_match('/^'.$pattern.'$/i', $val);
@@ -256,7 +256,7 @@ class SoftBank extends AParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyBackground_image($val)
+	protected function propertyBackgroundImage($val)
 	{
 		$pattern = '('.$this->uri.'|none)';
 		return preg_match('/^'.$pattern.'$/i', $val);
@@ -269,7 +269,7 @@ class SoftBank extends AParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyBackground_repeat($val)
+	protected function propertyBackgroundRepeat($val)
 	{
 		$pattern = '(repeat|repeat-x|repeat-y|no-repeat)';
 		return preg_match('/^'.$pattern.'$/i', $val);
@@ -282,7 +282,7 @@ class SoftBank extends AParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyBackground_attachment($val)
+	protected function propertyBackgroundAttachment($val)
 	{
 		$pattern = '(scroll|fixed)';
 		return preg_match('/^'.$pattern.'$/i', $val);
@@ -295,7 +295,7 @@ class SoftBank extends AParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyBackground_position($val)
+	protected function propertyBackgroundPosition($val)
 	{
 		$values = preg_split('/\s* \s*/', $val, -1, PREG_SPLIT_NO_EMPTY);
 		$regArr = array($this->percentage, $this->length, '(top|center|bottom)','(left|center|right)');
@@ -326,8 +326,8 @@ class SoftBank extends AParser
 	protected function propertyBackground($val)
 	{
 		$values = preg_split('/\s* \s*/', $val, -1, PREG_SPLIT_NO_EMPTY);
-		$regArr = array('propertyBackground_color', 'propertyBackground_image',
-			'propertyBackground_repeat', 'propertyBackground_attachment', 'propertyBackground_position'
+		$regArr = array('propertyBackgroundColor', 'propertyBackgroundImage',
+			'propertyBackgroundRepeat', 'propertyBackgroundAttachment', 'propertyBackgroundPosition'
 		);
 
 		if (count($values) > 7) return false; // 6個以上はありえない
@@ -336,7 +336,7 @@ class SoftBank extends AParser
 				$before = count($regArr);
 				foreach ($regArr as $n => $reg) {
 					if ($this->{$reg}($values[$i])) {
-						if ($reg === 'propertyBackground_position') {
+						if ($reg === 'propertyBackgroundPosition') {
 							if (count($values) < 6 && $this->{$reg}($values[$i+1])) {
 								$i++;
 							} else {
@@ -354,7 +354,7 @@ class SoftBank extends AParser
 				$before = count($regArr);
 				foreach ($regArr as $n => $reg) {
 					if ($this->{$reg}($values[$i])) {
-						if ($reg === 'propertyBackground_position') {
+						if ($reg === 'propertyBackgroundPosition') {
 							if (count($values) < 6 && $this->{$reg}($values[$i+1])) {
 								$i++;
 							}
@@ -376,7 +376,7 @@ class SoftBank extends AParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyFont_family($val)
+	protected function propertyFontFamily($val)
 	{
 		// font-family内の半角空白をエスケープ
 		$val = preg_replace('/([\"\'].*?) (.*?[\"\'])/', '$1&nbsp;$2', $val);
@@ -395,7 +395,7 @@ class SoftBank extends AParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyFont_style($val)
+	protected function propertyFontStyle($val)
 	{
 		$pattern = '(normal|italic|oblique)';
 		return preg_match('/^'.$pattern.'$/i', $val);
@@ -408,7 +408,7 @@ class SoftBank extends AParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyFont_variant($val)
+	protected function propertyFontVariant($val)
 	{
 		$pattern = '(normal|small-caps)';
 		return preg_match('/^'.$pattern.'$/i', $val);
@@ -421,7 +421,7 @@ class SoftBank extends AParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyFont_weight($val)
+	protected function propertyFontWeight($val)
 	{
 		$pattern = '(normal|bold|bolder|lighter|100|200|300|400|500|600|700|800|900)';
 		return preg_match('/^'.$pattern.'$/i', $val);
@@ -434,7 +434,7 @@ class SoftBank extends AParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyFont_size($val)
+	protected function propertyFontSize($val)
 	{
 		$absolutesize = '(?:xx-small|x-small|small|medium|large|x-large|xx-large)';
 		$relativesize = '(?:smaller|larger)';
@@ -457,7 +457,7 @@ class SoftBank extends AParser
 		$regArr = array('font-style', 'font-variant', 'font-weight', 'font-size', 'font-family');
 		$regArr = $this->getPropertyMethod($regArr); // メソッド名を取得
 		if ($regArr === false) return false; // メソッドがない場合、失敗する
-		$font_family = array_pop($regArr); // 'font-family'メソッド名を取得
+		$fontFamily = array_pop($regArr); // 'font-family'メソッド名を取得
 		$font_size = array_pop($regArr); // 'font-size'メソッド名を取得
 
 		$values = preg_split('/\s* \s*/', $val, -1, PREG_SPLIT_NO_EMPTY); // 半角空白で分割
@@ -481,7 +481,7 @@ class SoftBank extends AParser
 			}
 		}
 		// 最後尾は'font-family'
-		if($this->{$font_family}(array_pop($values)) === false) return false;
+		if($this->{$fontFamily}(array_pop($values)) === false) return false;
 		return true;
 	}
 
@@ -492,7 +492,7 @@ class SoftBank extends AParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyText_indent($val)
+	protected function propertyTextIndent($val)
 	{
 		$lengthInteger = '(?:(-|+)?[0-9]{1,}(?:px|em|ex|in|cm|mm|pt|pc)|0)'; // 整数のみ、実数はNG
 		$pattern = "($lengthInteger|$this->percentage)";
@@ -506,7 +506,7 @@ class SoftBank extends AParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyText_align($val)
+	protected function propertyTextAlign($val)
 	{
 		$pattern = '(left|right|center|justify)';
 		return preg_match('/^'.$pattern.'$/i', $val);
@@ -519,7 +519,7 @@ class SoftBank extends AParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyText_decoration($val)
+	protected function propertyTextDecoration($val)
 	{
 		$values = preg_split('/\s* \s*/', $val, -1, PREG_SPLIT_NO_EMPTY); // 半角空白で分割
 		$regArr = array('underline', 'overline', 'line-through', 'blink');
@@ -552,7 +552,7 @@ class SoftBank extends AParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyLetter_spacing($val)
+	protected function propertyLetterSpacing($val)
 	{
 		$pattern = "(normal|$this->length)";
 		return preg_match('/^'.$pattern.'$/i', $val);
@@ -565,9 +565,9 @@ class SoftBank extends AParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyWord_spacing($val)
+	protected function propertyWordSpacing($val)
 	{
-		return propertyLetter_spacing($val);
+		return propertyLetterSpacing($val);
 	}
 
 	/**
@@ -577,7 +577,7 @@ class SoftBank extends AParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyText_transform($val)
+	protected function propertyTextTransform($val)
 	{
 		$pattern = "(capitalize|uppercase|lowercase|none)";
 		return preg_match('/^'.$pattern.'$/i', $val);
@@ -590,7 +590,7 @@ class SoftBank extends AParser
 	 *
 	 * @return boolean
 	 */
-	protected function propertyWhite_space($val)
+	protected function propertyWhiteSpace($val)
 	{
 		$pattern = "(normal|nowrap)";
 		return preg_match('/^'.$pattern.'$/i', $val);
