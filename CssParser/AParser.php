@@ -243,9 +243,8 @@ abstract class AParser implements IParser
 				foreach ($data['pair'] as $k => $element) {
 					$method = $this->getPropertyMethod($element['property']);
 					$element['value'] = trim($element['value']);
-					if ($element['value'] === ''               // css-valueが空文字
-						|| $method === false                    // css-property(メソッド名)が適切でない
-						|| !$this->{$method}($element['value']) // css-valueが適切でない
+					if ($element['value'] === ''  // css-valueが空文字
+						|| $this->callPropertyMethod($element['property'], $element['value']) === false // css-property(メソッド名)が適切でない
 					) {
 						unset($parsedCss[$i][$j]['pair'][$k]);
 					}
@@ -358,6 +357,7 @@ abstract class AParser implements IParser
 	protected function selectorParse($selector)
 	{
 		$res = array();
+		$seek = 0;
 
 		// 単純セレクタ（simple selector）や結合子（combinators）に分割する
 		$before = 0;
