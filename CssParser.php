@@ -1,22 +1,57 @@
 <?php
-/**
- * 高速でコンパクト, 未来指向の JavaScript ライブラリ
- * uupaa.js (http://code.google.com/p/uupaa-js)
- * uupaa.js is licensed under the terms and conditions of the MIT licence.
- * (http://uupaa-js.googlecode.com/svn/trunk/0.7/doc/LICENSE.htm)
- * の
- * cssパーサ部分
- * ( http://code.google.com/p/uupaa-js/source/browse/trunk/0.7/uu.css.parse.js )
- * をPHPに移殖し、ソフトバンクのcssをチェックできるようにしたものです。
- *
- * @license MIT License
- */
+
+
+require_once 'PEG.php';
+
+require_once dirname(__FILE__) . '/CssParser/Locator.php';
+require_once dirname(__FILE__) . '/CssParser/Comment.php';
+require_once dirname(__FILE__) . '/CssParser/Ignore.php';
+require_once dirname(__FILE__) . '/CssParser/Block.php';
+require_once dirname(__FILE__) . '/CssParser/NodeCreater.php';
+require_once dirname(__FILE__) . '/CssParser/Node.php';
+require_once dirname(__FILE__) . '/CssParser/RuleSet.php';
+require_once dirname(__FILE__) . '/CssParser/AtRule.php';
+require_once dirname(__FILE__) . '/CssParser/AtBlock.php';
+
+require_once dirname(__FILE__) . '/CssParser/IValidate.php';
+require_once dirname(__FILE__) . '/CssParser/AValidate.php';
 
 require_once dirname(__FILE__) . '/CssParser/IParser.php';
 require_once dirname(__FILE__) . '/CssParser/AParser.php';
 
 class CssParser
 {
+
+	/**
+	 * cssをパースして構造木を返す
+	 *
+	 * @param string $css string
+	 *
+	 * @return CssParser_Node
+	 */
+	static function parse($css)
+	{
+		$css = self::cssClean($css);
+		$result = CssParser_Locator::it()->parser->parse(PEG::context($css));
+
+		return $result;
+	}
+
+	/**
+	 * cssをパースして、有効なものだけを返す。
+	 *
+	 * @param string $css  css
+	 * @param string $type type
+	 *
+	 * @return CssParser_Node
+	 */
+	static function validate($css, $type = null)
+	{
+		$node = self::parse($css);
+		$validator = self::factory($type);
+		return $validator->validate($node);
+	}
+
 	/**
 	 * 指定した種類のインスタンスを返す。
 	 * 指定しなければ、css2.1のパーサインスタンスを返す。
@@ -25,7 +60,7 @@ class CssParser
 	 *
 	 * @return object
 	 */
-	static function factory($type = null)
+	static protected function factory($type = null)
 	{
 		$type = ($type === null) ? 'css21' : $type;
 		$dirPath = dirname(__FILE__);
@@ -38,5 +73,22 @@ class CssParser
 
 		return $o = new $type;
 	}
-}
 
+	/**
+	 * cssの改行コード等を統一する
+	 *
+	 * @param string $css css
+	 *
+	 * @return string
+	 */
+	static public function cssClean($css)
+	{
+		$css = str_replace(array("\r\n", "\r"), "\n", $css); // 改行コードの統一
+		//$css = preg_replace('/@[^;]+;/', '', $css);            // @規則の削除 TODO 将来的にはパーサ側で処理
+		//$css = preg_replace('/@[^\{]+\{[^\}]*\}/', '', $css);
+		$css = rtrim($css);                                  // 終点から空白を削除
+		return $css;
+	}
+
+
+}

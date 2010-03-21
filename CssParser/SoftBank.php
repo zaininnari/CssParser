@@ -1,5 +1,5 @@
 <?php
-class SoftBank extends AParser
+class SoftBank extends AValidate
 {
 
 

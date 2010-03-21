@@ -225,6 +225,16 @@ abstract class AParser implements IParser
 		return $a * 100 + $b * 10 + $c;
 	}
 
+
+
+
+
+
+
+
+
+
+
 	/**
 	 * cssの宣言(declaration=>color:red)をチェックする。
 	 * 不正・未知のvalueを含むdeclarationは無視される
