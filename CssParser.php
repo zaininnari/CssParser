@@ -84,11 +84,8 @@ class CssParser
 	static public function cssClean($css)
 	{
 		$css = str_replace(array("\r\n", "\r"), "\n", $css); // 改行コードの統一
-		//$css = preg_replace('/@[^;]+;/', '', $css);            // @規則の削除 TODO 将来的にはパーサ側で処理
-		//$css = preg_replace('/@[^\{]+\{[^\}]*\}/', '', $css);
 		$css = rtrim($css);                                  // 終点から空白を削除
 		return $css;
 	}
-
 
 }
