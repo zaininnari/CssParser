@@ -74,10 +74,10 @@ class CssParser_RuleSet implements PEG_IParser
 			)
 		);
 
+		// エラートークン
 		$this->unknown = new CssParser_NodeCreater('unknown', $unknown);
 
-
-		$dispalyCommnet = PEG::seq('/*', PEG::many(PEG::tail(PEG::not('*/'), PEG::anything())), '*/');
+		$displayCommnet = PEG::seq('/*', PEG::many(PEG::tail(PEG::not('*/'), PEG::anything())), '*/');
 
 		$selectorChar = PEG::hook(
 			$rightCommentTrim,
@@ -85,7 +85,7 @@ class CssParser_RuleSet implements PEG_IParser
 				PEG::first(
 					PEG::many1(
 						PEG::choice(
-							$dispalyCommnet,
+							$displayCommnet,
 							PEG::char('{', true)
 						)
 					),
