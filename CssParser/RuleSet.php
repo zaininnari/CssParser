@@ -141,11 +141,9 @@ class CssParser_RuleSet implements PEG_IParser
 
 				// 宣言ブロックの開始「{」
 				if ($char === '{') $context->seek($context->tell() + 1);
-				$this->ignore->parse($context);
+				$this->ignore->parse($context); // コメントがある場合、進める
 				$declaration = PEG::amp($this->declaration)->parse($context); //先読みする
 				if ($declaration instanceof PEG_Failure) { // 失敗した場合は、unknownとして扱う。
-
-
 					if (PEG::amp($this->unknown)->parse($context) instanceof PEG_Failure ) {
 						if ($char === '{') $char = $context->readElement();
 					} else {
