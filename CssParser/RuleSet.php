@@ -27,7 +27,7 @@ class CssParser_RuleSet implements PEG_IParser
 			PEG::first('{', $ignore, PEG::many(PEG::char('}', true)), $ignore, PEG::eos()),
 
 			// ブロックが成立している場合   (宣言が空)
-			PEG::first('{', $ignore, '}', $ignore),
+			//PEG::first('{', $ignore, '}', $ignore),
 
 			// 宣言が成立していない場合(プロパティや値が適当でない場合)、その宣言は無視される。
 			// プロパティが適当でない場合 -> そのプロパティと対応する値が無視される。
@@ -49,8 +49,8 @@ class CssParser_RuleSet implements PEG_IParser
 		$rightCommentTrim = create_function('$s', 'return preg_replace("/\s*((\/\*[^*]*\*+([^\/][^*]*\*+)*\/)*\s*)*$/", "", $s);');
 
 		// プロパティ 「color:red」の「color」の部分
-		$property = PEG::third(
-			PEG::optional(PEG::char('{;')),
+		$property = PEG::second(
+			//PEG::optional(PEG::char('{;')),
 			$ignore,
 			PEG::many1(PEG::char(':;', true)),
 			$ignore
@@ -142,11 +142,14 @@ class CssParser_RuleSet implements PEG_IParser
 		// 宣言ブロック内を読み込む
 		while ($context->eos() !== true && $char !== '}') {
 			if ($char !== ';') {
-				//先読みする
-				$declaration = PEG::amp($this->declaration)->parse($context);
+
+				// 宣言ブロックの開始「{」
+				if ($char === '{') $context->seek($context->tell() + 1);
+				$this->ignore->parse($context);
+				$declaration = PEG::amp($this->declaration)->parse($context); //先読みする
 				if ($declaration instanceof PEG_Failure) { // 失敗した場合は、unknownとして扱う。
-					$char = $context->readElement(); // チェック用に1つ取得する
-					if ($this->ignore->parse($context) instanceof PEG_Failure) $context->seek($context->tell() - 1); // チェック用に動かしたので、1つ戻す
+
+
 					if (PEG::amp($this->unknown)->parse($context) instanceof PEG_Failure ) {
 						if ($char === '{') $char = $context->readElement();
 					} else {
