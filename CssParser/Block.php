@@ -33,18 +33,15 @@ class CssParser_Block implements PEG_IParser
 	 */
 	public function parse(PEG_IContext $context)
 	{
-		$this->ignore->parse($context); // 空白&コメントを無視する
-
+		$this->ignore->parse($context);             // 空白&コメントを無視する
 		if ($context->eos()) return PEG::failure(); // 読むべきものがなくなったら終了
-
-		$char = $context->readElement(); // チェック用に1つ取得する
-		$context->seek($context->tell() - 1); // チェック用に動かしたので、1つ戻す
+		$char = $context->readElement();            // チェック用に1つ取得する
+		$context->seek($context->tell() - 1);       // チェック用に動かしたので、1つ戻す
 
 		if ($char === '@') { // @規則
 			return $this->firstCharTable[$char]->parse($context);
 		}
 
 		return $this->ruleSet->parse($context);
-
 	}
 }

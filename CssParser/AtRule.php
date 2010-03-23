@@ -40,20 +40,14 @@ class CssParser_AtRule implements PEG_IParser
 			$_importNoUrlDoubleQuotes, $_importNoUrlSingleQuotes
 		);
 
-
-		$_unknown = PEG::seq('@', PEG::many(PEG::char(';', true)), ';');
 		$_unknown = PEG::seq('@', PEG::many(PEG::anything(), PEG::drop(PEG::not(PEG::char('\\', true), ';'))), PEG::anything(), PEG::anything(), ';');
-		$_unknown1 = PEG::seq('@', PEG::many(PEG::char('}', true)), '}');
-
 		$unknownSemicolon = PEG::seq(new CssParser_NodeCreater('unknown', PEG::join($_unknown)));
-		$unknownBlock = new CssParser_NodeCreater('unknown', PEG::join($_unknown1));
 
 		$parser = PEG::choice(
 			$charset,
 			$import,
-			new CssParser_AtBlock(PEG::anything()),
 			$unknownSemicolon,
-			$unknownBlock,
+			new CssParser_AtBlock(PEG::anything()),
 			new CssParser_NodeCreater('unknown', PEG::join(PEG::seq(PEG::many(PEG::anything()))))
 		);
 
