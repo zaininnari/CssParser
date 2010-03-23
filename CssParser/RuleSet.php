@@ -19,22 +19,6 @@ class CssParser_RuleSet implements PEG_IParser
 		$comment = PEG::memo(PEG::many(new CssParser_Comment($parser)));
 		$this->ignore = $ignore = PEG::memo(new CssParser_Ignore($parser));
 
-		// セレクタが有効として値を返すべきだけど、宣言が適当でない要素の検出
-		$this->blockEmpty = array(
-			// 宣言が成立していない場合(プロパティや値が適当でない場合)、その宣言は無視される。
-			// プロパティが適当でない場合 -> そのプロパティと対応する値が無視される。
-			// 値が適当でない場合        -> その値と対応するプロパティが無視される。
-
-			// ブロックが成立している場合   (宣言が成立していない。文字はあるが、「:」がない)
-			//PEG::first('{', $ignore, PEG::many1(PEG::char(':}', true)), $ignore, '}', $ignore),
-			// ブロックが成立している場合   (宣言が成立していない。プロパティがない、「:」がある、値がない)
-			//PEG::first('{', $ignore, ':', $ignore, '}', $ignore),
-			// ブロックが成立している場合   (宣言が成立していない。プロパティがない、「:」がある、値がある)
-			PEG::first('{', $ignore, ':', $ignore, PEG::many1(PEG::char('}', true)), '}', $ignore),
-			// ブロックが成立している場合   (宣言が成立していない。プロパティがある、「:」がある、値がない)
-			PEG::first('{', $ignore, PEG::many1(PEG::char(':', true)), $ignore, ':', $ignore, '}', $ignore),
-		);
-
 		// PEGの左再帰対策
 		// 右側にあるコメントと空白を削除する
 		// for PHP <= 5.2
@@ -100,18 +84,8 @@ class CssParser_RuleSet implements PEG_IParser
 
 		$result = array(
 			$this->type => $type,
-			'block'    => array(),
-			'error'    => array()
+			'block'    => array()
 		);
-
-		// 宣言が空の場合終了
-		foreach ($this->blockEmpty as $blockEmpty) {
-			if (!PEG::amp($blockEmpty)->parse($context) instanceof PEG_Failure) {
-				$result['error'][] = new CssParser_Node('error', 'empty block', $context->tell());
-				$blockEmpty->parse($context); // 進める
-				return $result;
-			}
-		}
 
 		if ($context->eos() === true) return $result;
 		$char = $context->readElement();            // チェック用に1つ取得する
