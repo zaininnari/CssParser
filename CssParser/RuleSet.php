@@ -26,9 +26,6 @@ class CssParser_RuleSet implements PEG_IParser
 			// 「}」がなくとも、「}」があるものとして解釈すべき(must)
 			PEG::first('{', $ignore, PEG::many(PEG::char('}', true)), $ignore, PEG::eos()),
 
-			// ブロックが成立している場合   (宣言が空)
-			//PEG::first('{', $ignore, '}', $ignore),
-
 			// 宣言が成立していない場合(プロパティや値が適当でない場合)、その宣言は無視される。
 			// プロパティが適当でない場合 -> そのプロパティと対応する値が無視される。
 			// 値が適当でない場合        -> その値と対応するプロパティが無視される。
