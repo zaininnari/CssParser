@@ -28,7 +28,7 @@ class CssParser_RuleSet implements PEG_IParser
 			// ブロックが成立している場合   (宣言が成立していない。文字はあるが、「:」がない)
 			//PEG::first('{', $ignore, PEG::many1(PEG::char(':}', true)), $ignore, '}', $ignore),
 			// ブロックが成立している場合   (宣言が成立していない。プロパティがない、「:」がある、値がない)
-			PEG::first('{', $ignore, ':', $ignore, '}', $ignore),
+			//PEG::first('{', $ignore, ':', $ignore, '}', $ignore),
 			// ブロックが成立している場合   (宣言が成立していない。プロパティがない、「:」がある、値がある)
 			PEG::first('{', $ignore, ':', $ignore, PEG::many1(PEG::char('}', true)), '}', $ignore),
 			// ブロックが成立している場合   (宣言が成立していない。プロパティがある、「:」がある、値がない)
