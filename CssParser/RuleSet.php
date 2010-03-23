@@ -2,7 +2,7 @@
 
 class CssParser_RuleSet implements PEG_IParser
 {
-	protected $parser, $selector, $ignore, $blockEmpty, $declaration, $unknownSelector, $unknown;
+	protected $parser, $selector, $ignore, $blockEmpty, $declaration;
 	protected $type = 'selector';
 
 	/**
@@ -20,21 +20,28 @@ class CssParser_RuleSet implements PEG_IParser
 		// 無視しないコメント
 		$displayCommnet = PEG::seq('/*', PEG::many(PEG::tail(PEG::not('*/'), PEG::anything())), '*/');
 
+		// エラートークン。「{}」のネストに対応
+		$unknownSeleBlockRef = PEG::choice($displayCommnet, PEG::ref($unknownSeleBlock), PEG::anything());
+		$unknownSeleBlock =  PEG::seq('{', PEG::many($unknownSeleBlockRef), '}');
+		$unknownBlockRef = PEG::choice($displayCommnet, PEG::ref($unknownBlock), PEG::char('}', true));
+		$unknownBlock =  PEG::seq('{', PEG::many($unknownBlockRef), '}');
 
 		// PEGの左再帰対策
 		// 右側にあるコメントと空白を削除する
 		// for PHP <= 5.2
 		$rightCommentTrim = create_function('$s', 'return preg_replace("/\s*((\/\*[^*]*\*+([^\/][^*]*\*+)*\/)*\s*)*$/", "", $s);');
 
-		// プロパティ 「color:red」の「color」の部分
-		$property = PEG::many1(PEG::choice($displayCommnet, PEG::char('{:;', true)));
-		// 値 「color:red」の「red」の部分
-		$value    = PEG::many1(PEG::choice($displayCommnet, PEG::char(';}', true)));
-
-		$this->declaration = PEG::seq(
-			new CssParser_NodeCreater('property', PEG::hook($rightCommentTrim, PEG::join($property))),
-			PEG::drop(':', $ignore),
-			new CssParser_NodeCreater('value', PEG::hook($rightCommentTrim, PEG::join($value)))
+		$property = PEG::many1(PEG::choice($displayCommnet, PEG::char('{:', true))); // プロパティ 「color:red」の「color」の部分
+		$value    = PEG::many1(PEG::choice($displayCommnet, PEG::char(';}', true))); // 値 「color:red」の「red」の部分
+		$this->declaration = PEG::choice(
+			PEG::seq(
+				new CssParser_NodeCreater('property', PEG::hook($rightCommentTrim, PEG::join($property))),
+				PEG::drop(':', $ignore),
+				new CssParser_NodeCreater('value', PEG::hook($rightCommentTrim, PEG::join($value)))
+			),
+			PEG::seq(
+				new CssParser_NodeCreater('unknown', PEG::join(PEG::many1($unknownBlockRef)))
+			)
 		);
 
 		$selectorChar = PEG::hook(
@@ -51,16 +58,11 @@ class CssParser_RuleSet implements PEG_IParser
 				)
 			)
 		);
-		$this->parser = new CssParser_NodeCreater($this->type, $selectorChar);
+		$this->parser = PEG::choice(
+			new CssParser_NodeCreater($this->type, $selectorChar),
+			new CssParser_NodeCreater('unknown', PEG::join(PEG::many1($unknownSeleBlockRef)))
+		);
 
-		$unknownSeleBlockRef = PEG::choice($displayCommnet, PEG::ref($unknownSeleBlock), PEG::anything());
-		$unknownSeleBlock =  PEG::seq('{', PEG::many($unknownSeleBlockRef), '}');
-		$this->unknownSelector = new CssParser_NodeCreater('unknown', PEG::join(PEG::many1($unknownSeleBlockRef)));
-
-		// エラートークン。「{}」のネストに対応
-		$unknownBlockRef = PEG::choice($displayCommnet, PEG::ref($unknownBlock), PEG::char('}', true));
-		$unknownBlock =  PEG::seq('{', PEG::many($unknownBlockRef), '}');
-		$this->unknown = new CssParser_NodeCreater('unknown', PEG::join(PEG::many1($unknownBlockRef)));
 	}
 
 	/**
@@ -76,22 +78,16 @@ class CssParser_RuleSet implements PEG_IParser
 	public function parse(PEG_IContext $context)
 	{
 		// パースを行う。
-		$offset = $context->tell();
 		$type = $this->parser->parse($context);
-		// 失敗すれば、unknownとする
-		if ($type instanceof PEG_Failure) {
-			$context->seek($offset);
-			$type = $this->unknownSelector->parse($context);
-		}
 
 		$result = array(
 			$this->type => $type,
 			'block'     => array()
 		);
 
-		if ($type->getType() === 'unknown' || $context->eos() === true) return $result;
-		$char = $context->readElement();            // チェック用に1つ取得する
-		$context->seek($context->tell() - 1);       // チェック用に動かしたので、1つ戻す
+		if ($context->eos() === true || $type->getType() === 'unknown') return $result;
+		$char = $context->readElement();      // チェック用に1つ取得する
+		$context->seek($context->tell() - 1); // チェック用に動かしたので、1つ戻す
 
 		// 宣言ブロック内を読み込む
 		while ($context->eos() !== true && $char !== '}') {
@@ -101,11 +97,9 @@ class CssParser_RuleSet implements PEG_IParser
 			if ($char === '}') return $result;
 			$context->seek($context->tell() - 1); // 取得用に動かしたので、1つ戻す
 
-			$offset = $context->tell();
 			$declaration = $this->declaration->parse($context);
-			if ($declaration instanceof PEG_Failure) { // 失敗した場合は、unknownとして扱う。
-				$context->seek($offset);
-				$result['block'][] = $this->unknown->parse($context);
+			if ($declaration[0] instanceof CssParser_Node && $declaration[0]->getType() === 'unknown') {
+				$result['block'] = $declaration;
 			} else {
 				list($property, $value) = $declaration;
 
