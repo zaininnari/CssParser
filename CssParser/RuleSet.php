@@ -2,7 +2,7 @@
 
 class CssParser_RuleSet implements PEG_IParser
 {
-	protected $parser, $selector, $ignore, $blockEmpty, $declaration;
+	protected $parser;
 	protected $type = 'selector';
 
 	/**
@@ -23,7 +23,7 @@ class CssParser_RuleSet implements PEG_IParser
 		// エラートークン。「{}」のネストに対応
 		$unknownSeleBlockRef = PEG::choice($displayCommnet, PEG::ref($unknownSeleBlock), PEG::anything());
 		$unknownSeleBlock =  PEG::seq('{', PEG::many($unknownSeleBlockRef), '}');
-		$unknownBlockRef = PEG::choice($displayCommnet, PEG::ref($unknownBlock), PEG::char('}', true));
+		$unknownBlockRef = PEG::choice($displayCommnet, PEG::ref($unknownBlock), PEG::hook(create_function('$r', 'return $r === false ? PEG::failure() : $r;'), PEG::char('}', true)));
 		$unknownBlock =  PEG::seq('{', PEG::many($unknownBlockRef), '}');
 
 		// PEGの左再帰対策
@@ -33,15 +33,34 @@ class CssParser_RuleSet implements PEG_IParser
 
 		$property = PEG::many1(PEG::choice($displayCommnet, PEG::char('{:', true))); // プロパティ 「color:red」の「color」の部分
 		$value    = PEG::many1(PEG::choice($displayCommnet, PEG::char(';}', true))); // 値 「color:red」の「red」の部分
-		$this->declaration = PEG::choice(
-			PEG::seq(
-				new CssParser_NodeCreater('property', PEG::hook($rightCommentTrim, PEG::join($property))),
-				PEG::drop(':', $ignore),
-				new CssParser_NodeCreater('value', PEG::hook($rightCommentTrim, PEG::join($value)))
+
+		$declarationArr = create_function(
+			'Array $a',
+			'
+			list($property, $value) = $a;
+			// !important の 削除
+			$pattern = "/\s*!\s*important\s*/i";
+			if (preg_match($pattern, $value->getData())) {
+				$value = new CssParser_Node(
+					$value->getType(),
+					preg_replace($pattern, "", $value->getData()),
+					$value->getOffset()
+				);
+				$isImportant = true;
+			}
+			return array("property" => $property, "value" => $value, "isImportant" => isset($isImportant) ? $isImportant : false);'
+		);
+		$declaration = PEG::choice(
+			PEG::hook(
+				$declarationArr,
+				PEG::seq(
+					new CssParser_NodeCreater('property', PEG::hook($rightCommentTrim, PEG::join($property))),
+					PEG::drop(':', $ignore),
+					new CssParser_NodeCreater('value', PEG::hook($rightCommentTrim, PEG::join($value))),
+					PEG::drop(PEG::choice(';', '}', PEG::eos()), $ignore)
+				)
 			),
-			PEG::seq(
-				new CssParser_NodeCreater('unknown', PEG::join(PEG::many1($unknownBlockRef)))
-			)
+			new CssParser_NodeCreater('unknown', PEG::join(PEG::many1($unknownBlockRef)))
 		);
 
 		$selectorChar = PEG::hook(
@@ -58,11 +77,17 @@ class CssParser_RuleSet implements PEG_IParser
 				)
 			)
 		);
-		$this->parser = PEG::choice(
-			new CssParser_NodeCreater($this->type, $selectorChar),
-			new CssParser_NodeCreater('unknown', PEG::join(PEG::many1($unknownSeleBlockRef)))
+		$parser = PEG::choice(
+			PEG::seq(
+				new CssParser_NodeCreater($this->type, $selectorChar),
+				PEG::drop($ignore),
+				PEG::many($declaration),
+				PEG::drop(PEG::choice('}', PEG::eos()))
+			),
+			PEG::seq(new CssParser_NodeCreater('unknown', PEG::join(PEG::many1($unknownSeleBlockRef))))
 		);
 
+		$this->parser = $parser;
 	}
 
 	/**
@@ -78,72 +103,9 @@ class CssParser_RuleSet implements PEG_IParser
 	public function parse(PEG_IContext $context)
 	{
 		// パースを行う。
-		$type = $this->parser->parse($context);
-
-		$result = array(
-			$this->type => $type,
-			'block'     => array()
-		);
-
-		if ($context->eos() === true || $type->getType() === 'unknown') return $result;
-		$char = $context->readElement();      // チェック用に1つ取得する
-		$context->seek($context->tell() - 1); // チェック用に動かしたので、1つ戻す
-
-		// 宣言ブロック内を読み込む
-		while ($context->eos() !== true && $char !== '}') {
-			$this->ignore->parse($context); // コメントがある場合、進める
-			if ($context->eos() === true) return $result;
-			$char = $context->readElement(); // 次の文字を取得する
-			if ($char === '}') return $result;
-			$context->seek($context->tell() - 1); // 取得用に動かしたので、1つ戻す
-
-			$declaration = $this->declaration->parse($context);
-			if ($declaration[0] instanceof CssParser_Node && $declaration[0]->getType() === 'unknown') {
-				$result['block'] = $declaration;
-			} else {
-				list($property, $value) = $declaration;
-
-				// !important の 削除
-				$pattern = '/\s*!\s*important\s*/i';
-				if (preg_match($pattern, $value->getData())) {
-					$value = new CssParser_Node(
-						$value->getType(),
-						preg_replace($pattern, '', $value->getData()),
-						$value->getOffset()
-					);
-					$isImportant = true;
-				}
-
-				$result['block'][] = array(
-					'property'    => $property,
-					'value'       => $value,
-					'isImportant' => isset($isImportant) ? $isImportant : false
-				);
-				if ($context->eos() === true) return $result;
-				$char = $context->readElement();      // 次の文字を取得する
-				$context->seek($context->tell() - 1); // 取得用に動かしたので、1つ戻す
-			}
-
-			if ($context->eos() === true) return $result;
-			$char = $context->readElement();      // 次の文字を取得する
-			$context->seek($context->tell() - 1); // 取得用に動かしたので、1つ戻す
-
-			while ($context->eos() !== true && $char === ';') {
-				$char = $context->readElement(); // 宣言（declaration）が複数あればさらに進める
-				$this->ignore->parse($context);
-				if ($context->eos() === true) return $result;
-				$char = $context->readElement(); // 次の文字を取得する
-				$context->seek($context->tell() - 1); // 取得用に動かしたので、1つ戻す
-			}
-
-		}
-		$this->ignore->parse($context);
-		if ($context->eos() === true) return $result;
-		$char = $context->readElement(); // 次の文字を取得する
-		$context->seek($context->tell() - 1); // 取得用に動かしたので、1つ戻す
-
-		if ($char === '}') $char = $context->readElement();
-
+		$res = $this->parser->parse($context);
+		$result[$this->type] = $res[0];
+		$result['block']     = $res[0]->getType() === 'unknown' ? array() : $res[1];
 		return $result;
 	}
 
