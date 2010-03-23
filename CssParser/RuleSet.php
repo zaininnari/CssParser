@@ -21,11 +21,6 @@ class CssParser_RuleSet implements PEG_IParser
 
 		// セレクタが有効として値を返すべきだけど、宣言が適当でない要素の検出
 		$this->blockEmpty = array(
-			// ブロックが成立していない場合 (「{」はあるが、「}」がない。「}」以外の文字はあってもよい)
-			// http://www.w3.org/TR/CSS2/syndata.html#parsing-errors
-			// 「}」がなくとも、「}」があるものとして解釈すべき(must)
-			PEG::first('{', $ignore, PEG::many(PEG::char('}', true)), $ignore, PEG::eos()),
-
 			// 宣言が成立していない場合(プロパティや値が適当でない場合)、その宣言は無視される。
 			// プロパティが適当でない場合 -> そのプロパティと対応する値が無視される。
 			// 値が適当でない場合        -> その値と対応するプロパティが無視される。
@@ -46,29 +41,25 @@ class CssParser_RuleSet implements PEG_IParser
 		$rightCommentTrim = create_function('$s', 'return preg_replace("/\s*((\/\*[^*]*\*+([^\/][^*]*\*+)*\/)*\s*)*$/", "", $s);');
 
 		// プロパティ 「color:red」の「color」の部分
-		$property = PEG::second(
-			$ignore,
+		$property = PEG::first(
 			PEG::many1(PEG::char(':;', true)),
 			$ignore
 		);
 
 		// 値 「color:red」の「red」の部分
-		$value = PEG::third(
-			':',
-			$ignore,
+		$value = PEG::first(
 			PEG::many1(PEG::char(';}', true)),
 			$ignore
 		);
 
-
 		$this->declaration = PEG::seq(
 			new CssParser_NodeCreater('property', PEG::hook($rightCommentTrim, PEG::join($property))),
+			PEG::drop(':', $ignore),
 			new CssParser_NodeCreater('value', PEG::hook($rightCommentTrim, PEG::join($value)))
 		);
 
 		$unknown = PEG::join(
 			PEG::seq(
-				PEG::drop(PEG::optional('{')),
 				PEG::many(PEG::anything(), PEG::drop(PEG::not(PEG::choice($ignore, PEG::char(';}', true)), $ignore, PEG::choice(';', '}')))),
 				PEG::char(';}', true)
 			)
@@ -77,6 +68,7 @@ class CssParser_RuleSet implements PEG_IParser
 		// エラートークン
 		$this->unknown = new CssParser_NodeCreater('unknown', $unknown);
 
+		// セレクタの内部にあるコメント。コメント内部の「{」を検出させない
 		$displayCommnet = PEG::seq('/*', PEG::many(PEG::tail(PEG::not('*/'), PEG::anything())), '*/');
 
 		$selectorChar = PEG::hook(
@@ -132,6 +124,7 @@ class CssParser_RuleSet implements PEG_IParser
 			}
 		}
 
+		if ($context->eos() === true) return $result;
 		$char = $context->readElement();            // チェック用に1つ取得する
 		$context->seek($context->tell() - 1);       // チェック用に動かしたので、1つ戻す
 
@@ -142,6 +135,7 @@ class CssParser_RuleSet implements PEG_IParser
 				// 宣言ブロックの開始「{」
 				if ($char === '{') $context->seek($context->tell() + 1);
 				$this->ignore->parse($context); // コメントがある場合、進める
+				if ($context->eos() === true) return $result;
 				$declaration = PEG::amp($this->declaration)->parse($context); //先読みする
 				if ($declaration instanceof PEG_Failure) { // 失敗した場合は、unknownとして扱う。
 					if (PEG::amp($this->unknown)->parse($context) instanceof PEG_Failure ) {
@@ -168,6 +162,7 @@ class CssParser_RuleSet implements PEG_IParser
 						'value'       => $value,
 						'isImportant' => isset($isImportant) ? $isImportant : false
 					);
+					if ($context->eos() === true) return $result;
 					$char = $context->readElement(); // 次の文字を取得する
 					$context->seek($context->tell() - 1); // 取得用に動かしたので、1つ戻す
 				}
