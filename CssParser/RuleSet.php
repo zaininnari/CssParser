@@ -47,7 +47,6 @@ class CssParser_RuleSet implements PEG_IParser
 
 		// プロパティ 「color:red」の「color」の部分
 		$property = PEG::second(
-			//PEG::optional(PEG::char('{;')),
 			$ignore,
 			PEG::many1(PEG::char(':;', true)),
 			$ignore
