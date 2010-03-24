@@ -155,180 +155,6 @@ abstract class AValidate implements IValidate
 		;
 	}
 
-	protected function isValueImportant($value)
-	{
-		return preg_replace(self::IMPORTANT, rtrim($value));
-	}
-
-
-	/**
-	 * css文字列をパースして返す。
-	 *
-	 * @param string $css string
-	 *
-	 * @see ./CssParser/IParser#parse($css)
-	 * @return array
-	 */
-	public function parse($css)
-	{
-		$parseCss = $this->parseCss($css); // 文字列にパース
-		$validate = $this->declarationValidate($parseCss); // 宣言をチェック
-		return $validate;
-	}
-
-
-	/**
-	 * CSS文字列をパースして返す。
-	 *
-	 * @param string $css string
-	 *
-	 * @return CssParser_Node
-	 */
-	protected function parseCss($css)
-	{
-		$rv = array('specs' => array(), 'data' => array());
-		$result = array();
-		$escape = $ignore = 0;
-
-		$css = $this->cssClean($css);
-		if(!isset($css)) return $result;
-		$ary = preg_split('/\s*\{|\}\s*/', $css, -1, PREG_SPLIT_NO_EMPTY);
-		if(count($ary) % 2 === 1) throw new InvalidArgumentException;
-
-		for ($i = 0; $i < count($ary); $i += 2) {
-			// 初期化
-			$expr = $ary[$i];                              // "E>F,G"
-			$decl = trim($ary[$i + 1]);                    // "color:red;text-aligh:left"
-			$exprs = preg_split('/\s*,\s*/', $expr, -1, PREG_SPLIT_NO_EMPTY);       // ["E>F", "G"]
-			$decls = preg_split('/\s*;\s*/', $decl . ';', -1, PREG_SPLIT_NO_EMPTY); // ["color:red", "text-align:left"]
-			$gd1 = $gd2 = $gp1 = $gp2 = array();
-			$gd1i = $gd2i = $gp1i = $gp2i = -1;
-
-			// 処理
-			for ($k = 0, $kz = count($decls); $k < $kz; ++$k) {
-				$ignore = 0;
-				if ($decls[$k]) {
-					$both = preg_split('/\s*:\s*/', $decls[$k], -1, PREG_SPLIT_NO_EMPTY);
-					$prop = array_shift($both);	// "color:red" -> "color"
-
-					$val = implode(':', $both); // "color:red" -> "red"
-					if ($val === '' || mb_strpos(chr(92), $val)) {
-						++$ignore;
-					} elseif (preg_match('/\!\s*important/i', $val)) { // [!important] rule
-						$val = preg_replace('/\s*!\s*important\s*/i', '', $val); // trim "!important"
-						$gd2[++$gd2i] = $prop . ':' . $val;
-						$gp2[++$gp2i] = array('property' => $prop, 'value' => $val);
-					} else { // [normal] rule
-						$gd1[++$gd1i] = $prop . ':' . $val; // "color:red"
-						$gp1[++$gp1i] = array('property' => $prop, 'value' => $val); //{prop:"color",val:"red"}
-					}
-					if($ignore) $this->setError('"' . $prop . ":" . $val + '" ignore decl');
-				}
-			}
-
-			// セレクタの前処理
-			// セレクタを解析できない場合，宣言ブロックごと(グループ化されているものも)無視される
-			foreach ($exprs as $n => $v) {
-				$tmp = $this->selectorValidate($v);
-				if ($tmp['valid'] !== true) {
-					continue 2;
-				} else {
-					$exprs[$n] = $tmp['cleanSelector'];
-				}
-			}
-
-			// セレクタの処理
-			for ($j = 0, $jz = count($exprs); $j < $jz; ++$j) {
-				$v = $exprs[$j];
-
-				// 重みを計算する
-				$spec = $this->calcSpec($v);
-				if (count($gd1)) { // normal rule
-					//if(!isset($spec, $rv['data'][$spec])) $rv['specs'][] = $spec;
-					$rv['data'][$spec][] = array('expr' => $v, 'pair' => $gp1);
-				}
-				if (count($gd2)) { // !important rule
-					$spec += 10000;
-					//if(!isset($spec, $rv['data'][$spec])) $rv['specs'][] = $spec;
-					$rv['data'][$spec][] = array('expr' => $v, 'pair' => $gp2);
-
-				}
-
-			}
-		}
-		// 重みをソート
-		sort($rv['specs']);
-
-		return $rv['data'];
-
-	}
-
-	/**
-	 * セレクタの重みの計算
-	 *
-	 * @param string $expr string
-	 *
-	 * @return Number: spec value
-	 */
-	protected function calcSpec($expr)
-	{
-		$a = $b = $c = 0;
-
-		$_specList = array(
-			array('/#[\w\x00C0-\xFFEE\-]+/' , 'a'),  // id
-			array('/\.[\w\x00C0-\xFFEE\-]+/' , 'b'), // class
-			array('/\w+/' , 'c'),                    // E
-		);
-
-		foreach ($_specList as $n => $_spec) {
-			for ($i = 0, $expr = preg_replace($_spec[0], '', $expr, -1, $count); $i < $count; $i++) {
-				${$_spec[1]}++;
-			}
-		}
-
-		return $a * 100 + $b * 10 + $c;
-	}
-
-
-
-
-
-
-
-
-	/**
-	 * cssの宣言(declaration=>color:red)をチェックする。
-	 * 不正・未知のvalueを含むdeclarationは無視される
-	 * http://www.w3.org/TR/CSS2/syndata.html#parsing-errors
-	 * ここではunsetされる
-	 *
-	 * @param Array $parsedCss parsedCss Array
-	 *
-	 * @return Array
-	 */
-	protected function declarationValidate(Array $parsedCss)
-	{
-		if (empty($parsedCss)) return $parsedCss;
-		foreach ($parsedCss as $i => $spec) {
-			foreach ($spec as $j => $data) {
-				foreach ($data['pair'] as $k => $element) {
-					$method = $this->getPropertyMethod($element['property']);
-					$element['value'] = trim($element['value']);
-					if ($element['value'] === ''  // css-valueが空文字
-						|| $this->callPropertyMethod($element['property'], $element['value']) === false // css-property(メソッド名)が適切でない
-					) {
-						unset($parsedCss[$i][$j]['pair'][$k]);
-					}
-				}
-				if(empty($parsedCss[$i][$j]['pair'])) unset($parsedCss[$i][$j]);
-			}
-			if(empty($parsedCss[$i])) unset($parsedCss[$i]);
-		}
-
-		return $parsedCss;
-	}
-
-
 
 	/**
 	 * propertyをチェックするメソッド名を返す。
@@ -340,27 +166,20 @@ abstract class AValidate implements IValidate
 	 */
 	protected function getPropertyMethod($property)
 	{
-		if (is_array($property)) {
-			$method = array();
-			foreach ($property as $v) {
-				$_method = $this->getPropertyMethod($v);
-				if ($_method === false) return false;
-				$method[] = $_method;
-			}
-		} else {
-			$property = trim($property);
-			if ($property{0} === '-') $property = substr($property, 1); // for vendor prefixes
-			$property = explode('-', $property);
-			array_walk($property, create_function('&$s', '$s{0}=strtoupper($s{0});return $s;'));
-			$property = implode('', $property);
-			$method = $this->propertyMethodPrefix . str_replace('-', '_', $property);
-			if ($method === $this->propertyMethodPrefix   // メソッド名が適切でない
-				|| !preg_match(self::METHOD, $method)       // メソッド名が適切でない
-				|| method_exists($this, $method) === false  // メソッド(cssプロパティ)が存在しない
-			) {
-				return false;
-			}
+		$property = trim($property);
+		while (strlen($property) > 0 && $property{0} === '-') $property = substr($property, 1); // for vendor prefixes
+		if (strlen($property) === 0) return false;
+		$property = explode('-', $property);
+		array_walk($property, create_function('&$s', '$s{0}=strtoupper($s{0});return $s;'));
+		$property = implode('', $property);
+		$method = $this->propertyMethodPrefix . str_replace('-', '_', $property);
+		if ($method === $this->propertyMethodPrefix   // メソッド名が適切でない
+			|| !preg_match(self::METHOD, $method)       // メソッド名が適切でない
+			|| method_exists($this, $method) === false  // メソッド(cssプロパティ)が存在しない
+		) {
+			return false;
 		}
+
 		return $method;
 	}
 
