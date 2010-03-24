@@ -16,11 +16,10 @@ require_once dirname(__FILE__) . '/CssParser/AtBlock.php';
 require_once dirname(__FILE__) . '/CssParser/IValidate.php';
 require_once dirname(__FILE__) . '/CssParser/AValidate.php';
 
-require_once dirname(__FILE__) . '/CssParser/IParser.php';
-require_once dirname(__FILE__) . '/CssParser/AParser.php';
-
 class CssParser
 {
+
+	static protected $css;
 
 	/**
 	 * cssをパースして構造木を返す
@@ -31,8 +30,8 @@ class CssParser
 	 */
 	static function parse($css)
 	{
-		$css = self::cssClean($css);
-		$result = CssParser_Locator::it()->parser->parse(PEG::context($css));
+		self::$css = self::cssClean($css);
+		$result = CssParser_Locator::it()->parser->parse(PEG::context(self::$css));
 
 		return $result;
 	}
@@ -62,16 +61,16 @@ class CssParser
 	 */
 	static protected function factory($type = null)
 	{
-		$type = ($type === null) ? 'css21' : $type;
+		$type = $type === null ? 'css21' : $type;
 		$dirPath = dirname(__FILE__);
 		$subDirName = __CLASS__;
 		$subDirPath = $dirPath . '/' . $subDirName;
-		if(!file_exists($subDirPath . '/' . $type . '.php')) throw new InvalidArgumentException;
+		if (!file_exists($subDirPath . '/' . $type . '.php')) throw new InvalidArgumentException;
 		if (!include_once $subDirPath . '/' . $type . '.php') {
 			throw new Exception('fail load file');
 		}
 
-		return $o = new $type;
+		return $o = new $type(self::$css);
 	}
 
 	/**
@@ -83,9 +82,7 @@ class CssParser
 	 */
 	static public function cssClean($css)
 	{
-		$css = str_replace(array("\r\n", "\r"), "\n", $css); // 改行コードの統一
-		$css = rtrim($css);                                  // 終点から空白を削除
-		return $css;
+		return rtrim(str_replace(array("\r\n", "\r"), "\n", $css));
 	}
 
 }

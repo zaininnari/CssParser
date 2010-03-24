@@ -16,7 +16,7 @@ class CssParser_Comment implements PEG_IParser
 		$p = PEG::seq(
 			PEG::drop('/*'),
 			PEG::many(PEG::tail(PEG::not('*/'), PEG::anything())),
-			PEG::drop('*/')
+			PEG::drop(PEG::choice('*/', PEG::eos()))
 		);
 
 		$this->parser = $p;

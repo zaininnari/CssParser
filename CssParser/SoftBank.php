@@ -24,7 +24,7 @@ class SoftBank extends AValidate
 	protected function propertyMarginTop($val)
 	{
 		$pattern = '('.$this->length.'|'.$this->percentage.'|auto)';
-		return preg_match('/^'.$pattern.'$/i', $val);
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
 	/**
@@ -39,7 +39,7 @@ class SoftBank extends AValidate
 		// 単位指定が無い場合、「em単位」として扱う => 単位なしOK
 		$lengthNoUnit = '(?:[0-9]{1,}(¥.[0-9]+)?|¥.[0-9]+)';
 		$pattern = '('.$this->lengthPlus.'|'.$this->percentagePlus.'|'.$lengthNoUnit.')';
-		return preg_match('/^'.$pattern.'$/i', $val);
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
 	/**
@@ -52,7 +52,7 @@ class SoftBank extends AValidate
 	protected function propertyBorderTopWidth($val)
 	{
 		$pattern = '('.$this->lengthPlus.'|thin|medium|thick)';
-		return preg_match('/^'.$pattern.'$/i', $val);
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
 	/**
@@ -65,7 +65,7 @@ class SoftBank extends AValidate
 	protected function propertyBorderTopColor($val)
 	{
 		$pattern = '('.$this->color.'|transparent)';
-		return preg_match('/^'.$pattern.'$/i', $val);
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
 	/**
@@ -78,33 +78,10 @@ class SoftBank extends AValidate
 	protected function propertyBorderTopStyle($val)
 	{
 		$pattern = '(none|hidden|dotted|dashed|solid|double|groove|ridge|inset|outset)';
-		return preg_match('/^'.$pattern.'$/i', $val);
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
-	/**
-	 * check css value
-	 *
-	 * @param string $val css value
-	 *
-	 * @return boolean
-	 */
-	protected function propertyBorderTop($val)
-	{
-		$values = preg_split('/\s* \s*/', $val, -1, PREG_SPLIT_NO_EMPTY);
-		$regArr = array('(thin|medium|thick)','(none|hidden|solid)', $this->color);
-		if (count($values) > 3) return false; // 4個以上はありえない
-		foreach ($values as $i => $value) {
-			$before = count($regArr);
-			foreach ($regArr as $n => $reg) {
-				if (preg_match('/^'.$reg.'$/i', $value)) {
-					unset($regArr[$n]);
-					break;
-				}
-			}
-			if (count($regArr) === $before) return false;
-		}
-		return true;
-	}
+
 
 	/**
 	 * check css value
@@ -116,7 +93,7 @@ class SoftBank extends AValidate
 	protected function propertyDisplay($val)
 	{
 		$pattern = '(none)';
-		return preg_match('/^'.$pattern.'$/i', $val);
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
 	/**
@@ -129,7 +106,7 @@ class SoftBank extends AValidate
 	protected function propertyWidth($val)
 	{
 		$pattern = '('.$this->lengthPlus.'|'.$this->percentagePlus.'|auto)';
-		return preg_match('/^'.$pattern.'$/i', $val);
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
 	/**
@@ -142,7 +119,7 @@ class SoftBank extends AValidate
 	protected function propertyHeight($val)
 	{
 		$pattern = '('.$this->lengthPlus.'|'.$this->percentagePlus.'|auto)';
-		return preg_match('/^'.$pattern.'$/i', $val);
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
 	/**
@@ -155,7 +132,7 @@ class SoftBank extends AValidate
 	protected function propertyLineHeight($val)
 	{
 		$pattern = '('.$this->lengthPlus.'|'.$this->percentagePlus.'|normal)';
-		return preg_match('/^'.$pattern.'$/i', $val);
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
 	/**
@@ -168,7 +145,7 @@ class SoftBank extends AValidate
 	protected function propertyVerticalAlign($val)
 	{
 		$pattern = '(baseline|sub|super|top|text-top|middle|bottom|text-bottom)';
-		return preg_match('/^'.$pattern.'$/i', $val);
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
 	/**
@@ -181,7 +158,7 @@ class SoftBank extends AValidate
 	protected function propertyListStyleType($val)
 	{
 		$pattern = '(disc|circle|square|decimal|lower-roman|upper-roman|lower-alpha|upper-alpha|none)';
-		return preg_match('/^'.$pattern.'$/i', $val);
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
 	/**
@@ -194,7 +171,7 @@ class SoftBank extends AValidate
 	protected function propertyListStyleImage($val)
 	{
 		$pattern = '('.$this->uri.'|none)';
-		return preg_match('/^'.$pattern.'$/i', $val);
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
 	/**
@@ -207,7 +184,7 @@ class SoftBank extends AValidate
 	protected function propertyListStylePosition($val)
 	{
 		$pattern = '(inside|outside)';
-		return preg_match('/^'.$pattern.'$/i', $val);
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
 	/**
@@ -246,7 +223,7 @@ class SoftBank extends AValidate
 	protected function propertyBackgroundColor($val)
 	{
 		$pattern = '('.$this->color.'|transparent)';
-		return preg_match('/^'.$pattern.'$/i', $val);
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
 	/**
@@ -259,7 +236,7 @@ class SoftBank extends AValidate
 	protected function propertyBackgroundImage($val)
 	{
 		$pattern = '('.$this->uri.'|none)';
-		return preg_match('/^'.$pattern.'$/i', $val);
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
 	/**
@@ -272,7 +249,7 @@ class SoftBank extends AValidate
 	protected function propertyBackgroundRepeat($val)
 	{
 		$pattern = '(repeat|repeat-x|repeat-y|no-repeat)';
-		return preg_match('/^'.$pattern.'$/i', $val);
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
 	/**
@@ -285,7 +262,7 @@ class SoftBank extends AValidate
 	protected function propertyBackgroundAttachment($val)
 	{
 		$pattern = '(scroll|fixed)';
-		return preg_match('/^'.$pattern.'$/i', $val);
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
 	/**
@@ -306,10 +283,10 @@ class SoftBank extends AValidate
 		} elseif (count($values) === 2) {
 			// percentageとlengthの混在は不可
 			foreach ($regArr as $n => $reg) {
-				if (preg_match('/^'.$reg.'$/i', $value[0])) {
-					if ($n < 2 && !preg_match('/^'.$reg.'$/i', $value[1])) return false;
-					if ($n === 2 && !preg_match('/^'.$regArr[3].'$/i', $value[1])) return false;
-					if ($n === 3 && !preg_match('/^'.$regArr[2].'$/i', $value[1])) return false;
+				if (preg_match('/^'.$reg.'$/i', $values[0])) {
+					if ($n < 2 && !preg_match('/^'.$reg.'$/i', $values[1])) return false;
+					if ($n === 2 && !preg_match('/^'.$regArr[3].'$/i', $values[1])) return false;
+					if ($n === 3 && !preg_match('/^'.$regArr[2].'$/i', $values[1])) return false;
 				}
 			}
 		}
@@ -330,14 +307,14 @@ class SoftBank extends AValidate
 			'background-repeat', 'background-attachment', 'background-position'
 		);
 
-		if (count($values) > 7) return false; // 6個以上はありえない
+		if (count($values) > 6) return false; // 7個以上はありえない
 
 		for ($i = 0; $i < count($values); $i++) {
 			$before = count($regArr);
 			foreach ($regArr as $n => $reg) {
 				if ($this->callPropertyMethod($reg, $values[$i])) {
 					if ($reg === 'background-position') {
-						if (count($values) < 6 && $this->callPropertyMethod($reg, $values[$i+1])) {
+						if (isset($values[$i+1]) === false || (count($values) < 6 && $this->callPropertyMethod($reg, $values[$i+1]))) {
 							$i++;
 						} else {
 							if (count($values) === 6) return false;
@@ -382,7 +359,7 @@ class SoftBank extends AValidate
 	protected function propertyFontStyle($val)
 	{
 		$pattern = '(normal|italic|oblique)';
-		return preg_match('/^'.$pattern.'$/i', $val);
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
 	/**
@@ -395,7 +372,7 @@ class SoftBank extends AValidate
 	protected function propertyFontVariant($val)
 	{
 		$pattern = '(normal|small-caps)';
-		return preg_match('/^'.$pattern.'$/i', $val);
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
 	/**
@@ -408,7 +385,7 @@ class SoftBank extends AValidate
 	protected function propertyFontWeight($val)
 	{
 		$pattern = '(normal|bold|bolder|lighter|100|200|300|400|500|600|700|800|900)';
-		return preg_match('/^'.$pattern.'$/i', $val);
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
 	/**
@@ -424,7 +401,7 @@ class SoftBank extends AValidate
 		$relativesize = '(?:smaller|larger)';
 
 		$pattern = "($absolutesize|$relativesize|$this->lengthPlus|$this->percentagePlus|inherit)";
-		return preg_match('/^'.$pattern.'$/i', $val);
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
 	/**
@@ -473,9 +450,9 @@ class SoftBank extends AValidate
 	 */
 	protected function propertyTextIndent($val)
 	{
-		$lengthInteger = '(?:(-|+)?[0-9]{1,}(?:px|em|ex|in|cm|mm|pt|pc)|0)'; // 整数のみ、実数はNG
+		$lengthInteger = '(?:(-|\+)?[0-9]{1,}(?:px|em|ex|in|cm|mm|pt|pc)|0)'; // 整数のみ、実数はNG
 		$pattern = "($lengthInteger|$this->percentage)";
-		return preg_match('/^'.$pattern.'$/i', $val);
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
 	/**
@@ -488,7 +465,7 @@ class SoftBank extends AValidate
 	protected function propertyTextAlign($val)
 	{
 		$pattern = '(left|right|center|justify)';
-		return preg_match('/^'.$pattern.'$/i', $val);
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
 	/**
@@ -534,7 +511,7 @@ class SoftBank extends AValidate
 	protected function propertyLetterSpacing($val)
 	{
 		$pattern = "(normal|$this->length)";
-		return preg_match('/^'.$pattern.'$/i', $val);
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
 	/**
@@ -559,7 +536,7 @@ class SoftBank extends AValidate
 	protected function propertyTextTransform($val)
 	{
 		$pattern = "(capitalize|uppercase|lowercase|none)";
-		return preg_match('/^'.$pattern.'$/i', $val);
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
 	/**
@@ -572,7 +549,7 @@ class SoftBank extends AValidate
 	protected function propertyWhiteSpace($val)
 	{
 		$pattern = "(normal|nowrap)";
-		return preg_match('/^'.$pattern.'$/i', $val);
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
 }

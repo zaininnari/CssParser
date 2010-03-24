@@ -31,7 +31,7 @@ class CssParser_RuleSet implements PEG_IParser
 		// for PHP <= 5.2
 		$rightCommentTrim = create_function('$s', 'return preg_replace("/\s*((\/\*[^*]*\*+([^\/][^*]*\*+)*\/)*\s*)*$/", "", $s);');
 
-		$property = PEG::many1(PEG::choice($displayCommnet, PEG::char('{:', true))); // プロパティ 「color:red」の「color」の部分
+		$property = PEG::many1(PEG::choice($displayCommnet, PEG::char('{}:', true))); // プロパティ 「color:red」の「color」の部分
 		$value    = PEG::many1(PEG::choice($displayCommnet, PEG::char(';}', true))); // 値 「color:red」の「red」の部分
 
 		$declarationArr = create_function(
@@ -57,7 +57,7 @@ class CssParser_RuleSet implements PEG_IParser
 					new CssParser_NodeCreater('property', PEG::hook($rightCommentTrim, PEG::join($property))),
 					PEG::drop(':', $ignore),
 					new CssParser_NodeCreater('value', PEG::hook($rightCommentTrim, PEG::join($value))),
-					PEG::drop(PEG::choice(';', '}', PEG::eos()), $ignore)
+					PEG::drop(PEG::choice(';', PEG::amp('}'), PEG::eos()), $ignore)
 				)
 			),
 			new CssParser_NodeCreater('unknown', PEG::join(PEG::many1($unknownBlockRef)))

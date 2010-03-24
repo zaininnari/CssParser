@@ -42,7 +42,7 @@ class CssParser_Locator
 	protected function createRuleSet()
 	{
 		$parser = new CssParser_RuleSet($this->Block);
-		return $this->nodeCreater('RuleSet', $parser);
+		return $this->nodeCreater('ruleSet', $parser);
 	}
 
 	protected function createIgnore()

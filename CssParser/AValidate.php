@@ -70,14 +70,17 @@ abstract class AValidate implements IValidate
 	protected $color = '((?:#[0-9a-fA-F]{3})|(?:#[0-9a-zA-Z]{6})|(?:rgb\(\s*(?:[0-2][0-5]{2}|[0-1][0-9]{0,2})\s*,\s*(?:[0-2][0-5]{2}|[0-1][0-9]{0,2})\s*,\s*(?:[0-2][0-5]{2}|[0-1][0-9]{0,2})\s*\))|(?:rgb\(\s*(?:[0-9]{1,3}|0)%\s*,\s*(?:[0-9]{1,3}|0)%\s*,\s*(?:[0-9]{1,3}|0)%\s*\))|(?:Black|Silver|Gray|White|Maroon|Red|Purple|Fuchsia|Green|Lime|Olive|Yellow|Navy|Blue|Teal|Aqua|Orange)|(?:aliceblue|antiquewhite|aqua|aquamarine|azure|beige|bisque|black|blanchedalmond|blue|blueviolet|brass|brown|burlywood|cadetblue|chartreuse|chocolate|coolcopper|copper|coral|cornflower|cornflowerblue|cornsilk|crimson|cyan|darkblue|darkbrown|darkcyan|darkgoldenrod|darkgray|darkgreen|darkkhaki|darkmagenta|darkolivegreen|darkorange|darkorchid|darkred|darksalmon|darkseagreen|darkslateblue|darkslategray|darkturquoise|darkviolet|deeppink|deepskyblue|dimgray|dodgerblue|feldsper|firebrick|floralwhite|forestgreen|fuchsia|gainsboro|ghostwhite|gold|goldenrod|gray|green|greenyellow|honeydew|hotpink|indianred|indigo|ivory|khaki|lavender|lavenderblush|lawngreen|lemonchiffon|lightblue|lightcoral|lightcyan|lightgoldenrodyellow|lightgreen|lightgrey|lightpink|lightsalmon|lightseagreen|lightskyblue|lightslategray|lightsteelblue|lightyellow|lime|limegreen|linen|magenta|maroon|mediumaquamarine|mediumblue|mediumorchid|mediumpurple|mediumseagreen|mediumslateblue|mediumspringgreen|mediumturquoise|mediumvioletred|midnightblue|mintcream|mistyrose|moccasin|navajowhite|navy|oldlace|olive|olivedrab|orange|orangered|orchid|palegoldenrod|palegreen|paleturquoise|palevioletred|papayawhip|peachpuff|peru|pink|plum|powderblue|purple|red|richblue|rosybrown|royalblue|saddlebrown|salmon|sandybrown|seagreen|seashell|sienna|silver|skyblue|slateblue|slategray|snow|springgreen|steelblue|tan|teal|thistle|tomato|turquoise|violet|wheat|white|whitesmoke|yellow|yellowgreen)|(?:Background|Window|WindowText|WindowFrame|ActiveBorder|InactiveBorder|ActiveCaption|InactiveCaption|CaptionText|InactiveCaptionText|Scrollbar|AppWorkspace|Highlight|HighlightText|GrayText|Menu|MenuText|ButtonFace|ButtonText|ButtonHighlight|ButtonShadow|ThreeDFace|ThreeDHighlight|ThreeDShadow|ThreeDLightShadow|ThreeDDarkShadow|InfoText|InfoBackground))';
 	protected $uri = '(?:.*?)';
 
+	protected $css;
+
 	/**
 	 * __construct
 	 *
 	 * @return ?
 	 */
-	function __construct()
+	function __construct($css)
 	{
-		if($this->selectorParseList === null) $this->initialize();
+		$this->css = $css;
+		if ($this->selectorParseList === null) $this->initialize();
 	}
 
 	/**
@@ -100,23 +103,19 @@ abstract class AValidate implements IValidate
 			}
 		}
 		$this->selectorParseList = $_selectorParseList;
-
 	}
 
 
 	function validate(CssParser_Node $node)
 	{
 		if ($node->getType() !== 'root') throw new InvalidArgumentException();
-
-		$ret = '1';
-		//$ret = $this->readNode($node);
-		return $node;
+		return $this->readNode($node);
 	}
 
 	protected function readNode(CssParser_Node $node)
 	{
 		$ret = $this->{'read' . $node->getType()}($node->getData());
-		return $ret;
+		return $o = new CssParser_Node($node->getType(), $ret, $node->getOffset());
 	}
 
 	protected function readRoot(Array $arr)
@@ -127,29 +126,33 @@ abstract class AValidate implements IValidate
 			if($_result !== false) $result[] = $_result;
 		}
 
-
 		return $result;
 	}
 
-	protected function readStyle(Array $arr)
+	protected function readRuleSet(Array $arr)
 	{
-		//$selectors = preg_split('/\s*,\s*/', $arr['selector']->getData(), -1, PREG_SPLIT_NO_EMPTY);
-		//foreach ($selectors as &$v) $v = $this->selectorParse($v);
+		if ($arr['selector']->getType() === 'unknown') return $arr;
+		$selectors = preg_split('/\s*,\s*/', $arr['selector']->getData(), -1, PREG_SPLIT_NO_EMPTY);
+		foreach ($selectors as &$v) $v = $this->selectorValidate($v);
 
-		foreach ($arr['block'] as $key => $delc) {
+		foreach ($arr['block'] as $key => &$delc) {
+			if ($delc instanceof CssParser_Node && $delc->getType() === 'unknown') continue;
 			if ($delc['value']->getData() === ''  // css-valueが空文字
 				|| $this->callPropertyMethod($delc['property']->getData(), $delc['value']->getData()) === false // css-property(メソッド名)が適切でない
 			) {
-				$this->setError('block', $delc);
-				unset($arr['block'][$key]);
+				$arr['block'][$key] = new CssParser_Node(
+					'unknown',
+					mb_substr($this->css, $delc['property']->getOffset(), mb_strpos($this->css, $delc['value']->getData(), $delc['property']->getOffset()) - $delc['property']->getOffset() + mb_strlen($delc['value']->getData())),
+					$delc['property']->getOffset()
+				);
 			}
 		}
 
-		$arr['block'] = array_merge($arr['block']);
+		return array('selector' => $selectors, 'block' => array_merge($arr['block']));
+	}
 
-		if(empty($arr['block'])) unset($arr);
-
-		return isset($arr) ? $arr : false;
+	protected function readAtRule(Array $arr) {
+		;
 	}
 
 	protected function isValueImportant($value)
@@ -345,7 +348,9 @@ abstract class AValidate implements IValidate
 				$method[] = $_method;
 			}
 		} else {
-			$property = explode('-', trim($property));
+			$property = trim($property);
+			if ($property{0} === '-') $property = substr($property, 1); // for vendor prefixes
+			$property = explode('-', $property);
 			array_walk($property, create_function('&$s', '$s{0}=strtoupper($s{0});return $s;'));
 			$property = implode('', $property);
 			$method = $this->propertyMethodPrefix . str_replace('-', '_', $property);
@@ -373,7 +378,7 @@ abstract class AValidate implements IValidate
 	{
 		$method = $this->getPropertyMethod($property);
 		if ($method === false) return false; // メソッドが存在しない/適当でない
-		return call_user_func_array(array($this, $method), $value);
+		return call_user_func(array($this, $method), $value);
 	}
 
 	/**
@@ -518,7 +523,7 @@ abstract class AValidate implements IValidate
 
 		// 分割したセレクタの構文をチェックする
 		$before = 'start';
-		$selector[] = array('end' , '{'); // 一番最後にと終了を意味する識別文字を挿入する
+		$selector[] = array('end' , '{'); // 一番最後に終了を意味する識別文字を挿入する
 		foreach ($selector as $n => $v) {
 			$test = $v[0];
 			foreach ($group as $name => $member) { // セレクタのグルーピング
@@ -564,7 +569,7 @@ abstract class AValidate implements IValidate
 		foreach ($regexs as $regex) {
 			if(preg_match('/^'.$regex.'$/i', $val)) return true;
 		}*/
-		return preg_match('/^'.$this->color.'$/i', $val);
+		return preg_match('/^'.$this->color.'$/i', $val) === 1;
 	}
 
 	/**
@@ -577,7 +582,7 @@ abstract class AValidate implements IValidate
 	protected function propertyMarginTop($val)
 	{
 		$pattern = '('.$this->length.'|'.$this->percentage.'|auto|inherit)';
-		return preg_match('/^'.$pattern.'$/i', $val);
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
 	/**
@@ -641,7 +646,7 @@ abstract class AValidate implements IValidate
 	protected function propertyPaddingTop($val)
 	{
 		$pattern = '('.$this->lengthPlus.'|'.$this->percentagePlus.'|inherit)';
-		return preg_match('/^'.$pattern.'$/i', $val);
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
 	/**
@@ -705,7 +710,7 @@ abstract class AValidate implements IValidate
 	protected function propertyBorderTopWidth($val)
 	{
 		$pattern = '('.$this->lengthPlus.'|thin|medium|thick|inherit)';
-		return preg_match('/^'.$pattern.'$/i', $val);
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
 	/**
@@ -769,7 +774,7 @@ abstract class AValidate implements IValidate
 	protected function propertyBorderTopColor($val)
 	{
 		$pattern = '('.$this->color.'|transparent|inherit)';
-		return preg_match('/^'.$pattern.'$/i', $val);
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
 	/**
@@ -833,7 +838,7 @@ abstract class AValidate implements IValidate
 	protected function propertyBorderTopStyle($val)
 	{
 		$pattern = '(none|hidden|dotted|dashed|solid|double|groove|ridge|inset|outset|inherit)';
-		return preg_match('/^'.$pattern.'$/i', $val);
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
 	/**
@@ -973,7 +978,7 @@ abstract class AValidate implements IValidate
 	protected function propertyDisplay($val)
 	{
 		$pattern = '(inline|block|list-item|run-in|compact|marker|table|inline-table|table-row-group|table-header-group|table-footer-group|table-row|table-column-group|table-column|table-cell|table-caption|none|inherit)';
-		return preg_match('/^'.$pattern.'$/i', $val);
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
 	/**
