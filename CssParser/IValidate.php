@@ -3,14 +3,13 @@
 interface IValidate
 {
 
-
-	public function validate(CssParser_Node $node);
-
 	/**
-	 * エラーメッセージを取得
+	 * validate
 	 *
-	 * @return array
+	 * @param CssParser_Node $node CssParser_Node
+	 *
+	 * @return CssParser_Node
 	 */
-	public function getError();
+	public function validate(CssParser_Node $node);
 
 }

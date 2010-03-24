@@ -6,10 +6,6 @@ abstract class AValidate implements IValidate
 	 */
 	const METHOD = '/[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*/';
 
-	const IMPORTANT = '/\s*!\s*important\s*/i';
-
-	protected $error = array();
-
 	/**
 	 * パースするセレクタの正規表現
 	 * パースしないようにするには、継承したクラスに
@@ -75,6 +71,8 @@ abstract class AValidate implements IValidate
 	/**
 	 * __construct
 	 *
+	 * @param string $css css
+	 *
 	 * @return ?
 	 */
 	function __construct($css)
@@ -106,18 +104,43 @@ abstract class AValidate implements IValidate
 	}
 
 
+	/**
+	 * validate
+	 *
+	 * @param CssParser_Node $node node object
+	 *
+	 * @see CssParser/IValidate#validate($node)
+	 *
+	 * @return CssParser_Node
+	 */
 	function validate(CssParser_Node $node)
 	{
 		if ($node->getType() !== 'root') throw new InvalidArgumentException();
 		return $this->readNode($node);
 	}
 
+
+	/**
+	 * read node
+	 *
+	 * @param CssParser_Node $node node object
+	 *
+	 * @return array
+	 */
 	protected function readNode(CssParser_Node $node)
 	{
 		$ret = $this->{'read' . $node->getType()}($node->getData());
 		return $o = new CssParser_Node($node->getType(), $ret, $node->getOffset());
 	}
 
+
+	/**
+	 * read node
+	 *
+	 * @param array $arr node data
+	 *
+	 * @return array
+	 */
 	protected function readRoot(Array $arr)
 	{
 		$result = array();
@@ -129,6 +152,13 @@ abstract class AValidate implements IValidate
 		return $result;
 	}
 
+	/**
+	 * read node
+	 *
+	 * @param array $arr node data
+	 *
+	 * @return array
+	 */
 	protected function readRuleSet(Array $arr)
 	{
 		if ($arr['selector']->getType() === 'unknown') return $arr;
@@ -151,7 +181,15 @@ abstract class AValidate implements IValidate
 		return array('selector' => $selectors, 'block' => array_merge($arr['block']));
 	}
 
-	protected function readAtRule(Array $arr) {
+	/**
+	 * read node
+	 *
+	 * @param array $arr node data
+	 *
+	 * @return array
+	 */
+	protected function readAtRule(Array $arr)
+	{
 		;
 	}
 
@@ -810,47 +848,6 @@ abstract class AValidate implements IValidate
 	protected function propertyColor($val)
 	{
 		return $this->color($val);
-	}
-
-	/**
-	 * コメントを削除する
-	 *
-	 * @param string $css css
-	 *
-	 * @return string
-	 */
-	protected function cssClean($css)
-	{
-		// コメントの削除
-		$css = preg_replace('/\/\*[^*]*\*+([^\/][^*]*\*+)*\//m', '', $css);
-		// 改行の削除
-		$css = preg_replace('/\s*\n+\s*/m', chr(32), $css);
-
-		return trim($css);
-	}
-
-
-
-	/**
-	 * エラーメッセージをセットする
-	 *
-	 * @param string $str string
-	 *
-	 * @return ?
-	 */
-	protected function setError($str, $data = array())
-	{
-		$this->error[] = func_get_args();
-	}
-
-	/**
-	 * エラーメッセージを取得
-	 *
-	 * @return array
-	 */
-	public function getError()
-	{
-		return $this->error;
 	}
 
 }
