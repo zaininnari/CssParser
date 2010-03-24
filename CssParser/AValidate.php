@@ -170,15 +170,14 @@ abstract class AValidate implements IValidate
 			if ($delc['value']->getData() === ''  // css-valueが空文字
 				|| $this->callPropertyMethod($delc['property']->getData(), $delc['value']->getData()) === false // css-property(メソッド名)が適切でない
 			) {
-				$arr['block'][$key] = new CssParser_Node(
-					'unknown',
-					mb_substr($this->css, $delc['property']->getOffset(), mb_strpos($this->css, $delc['value']->getData(), $delc['property']->getOffset()) - $delc['property']->getOffset() + mb_strlen($delc['value']->getData())),
-					$delc['property']->getOffset()
-				);
+				$isValid = false;
+			} else {
+				$isValid = true;
 			}
+			$arr['block'][$key]['isValid'] = $isValid;
 		}
 
-		return array('selector' => $selectors, 'block' => array_merge($arr['block']));
+		return array('selector' => $selectors, 'block' => $arr['block']);
 	}
 
 	/**
@@ -190,7 +189,7 @@ abstract class AValidate implements IValidate
 	 */
 	protected function readAtRule(Array $arr)
 	{
-		;
+		//TODO;
 	}
 
 
@@ -250,7 +249,7 @@ abstract class AValidate implements IValidate
 			'cleanSelector' => null,
 			'parsedSelector' => array(),
 			'error' => array(),
-			'valid' => false,
+			'isValid' => false,
 		);
 
 		//余分な空白を取り除く
@@ -265,10 +264,10 @@ abstract class AValidate implements IValidate
 
 		// 単純セレクタ（simple selector）や結合子（combinators）の構文をチェックする
 		$syntax = self::selectorSyntax($result['parsedSelector']);
-		if(!empty($syntax)) $result['error'] = array_merge($result['error'], $syntax);
+		if (!empty($syntax)) $result['error'] = array_merge($result['error'], $syntax);
 
 		//エラーがなければ成功
-		if(empty($result['error'])) $result['valid'] = true;
+		if (empty($result['error'])) $result['isValid'] = true;
 
 		return $result;
 	}
