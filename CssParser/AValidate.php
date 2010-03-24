@@ -88,7 +88,7 @@ abstract class AValidate implements IValidate
 	 */
 	protected function initialize()
 	{
-		//valueをチェックするメソッドのprefixのチェック。
+		// valueをチェックするメソッドのprefixのチェック。
 		if (!preg_match(self::METHOD, $this->propertyMethodPrefix)) {
 			throw new OutOfBoundsException();
 		}
@@ -204,16 +204,12 @@ abstract class AValidate implements IValidate
 	 */
 	protected function getPropertyMethod($property)
 	{
-		$property = trim($property);
-		while (strlen($property) > 0 && $property{0} === '-') $property = substr($property, 1); // for vendor prefixes
-		if (strlen($property) === 0) return false;
-		$property = explode('-', $property);
-		array_walk($property, create_function('&$s', '$s{0}=strtoupper($s{0});return $s;'));
-		$property = implode('', $property);
-		$method = $this->propertyMethodPrefix . str_replace('-', '_', $property);
-		if ($method === $this->propertyMethodPrefix   // メソッド名が適切でない
-			|| !preg_match(self::METHOD, $method)       // メソッド名が適切でない
-			|| method_exists($this, $method) === false  // メソッド(cssプロパティ)が存在しない
+		$property = preg_split('/-/', trim($property), -1, PREG_SPLIT_NO_EMPTY); // for vendor prefixes
+		if (count($property) === 0) return false;
+		array_walk($property, create_function('&$s', '$s{0}=strtoupper($s{0});return $s;')); // for PHP < 5.3
+		$method = $this->propertyMethodPrefix . implode('', $property);
+		if (preg_match(self::METHOD, $method) === 0  // メソッド名が適切でない
+			|| method_exists($this, $method) === false // メソッド(cssプロパティ)が存在しない
 		) {
 			return false;
 		}
