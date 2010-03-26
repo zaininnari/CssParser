@@ -16,8 +16,7 @@ class CssParser_AtRule implements PEG_IParser
 		$ignore = new CssParser_Ignore(PEG::anything());
 
 		$_charsetMain = PEG::seq(PEG::many1(PEG::anything(), PEG::drop(PEG::not(PEG::char('\\', true), '"'))), PEG::anything(), PEG::anything());
-		$_charset = PEG::seq(PEG::drop('@charset "'), new CssParser_NodeCreater('charset', PEG::join($_charsetMain)), PEG::drop('";'));
-		$charset = $_charset;
+		$charset = PEG::seq(PEG::drop('@charset "'), new CssParser_NodeCreater('charset', PEG::join($_charsetMain)), PEG::drop('";'));
 
 		$mediaType = PEG::seq(PEG::many(PEG::anything(), PEG::drop(PEG::not(PEG::choice($ignore, PEG::char('\\', true)), ';'))), PEG::choice($ignore, PEG::anything()), PEG::anything());
 		$mediaType = new CssParser_NodeCreater('mediaType', PEG::join($mediaType));
@@ -47,8 +46,7 @@ class CssParser_AtRule implements PEG_IParser
 			$charset,
 			$import,
 			$unknownSemicolon,
-			new CssParser_AtBlock(PEG::anything()),
-			new CssParser_NodeCreater('unknown', PEG::join(PEG::seq(PEG::many(PEG::anything()))))
+			new CssParser_RuleSet(PEG::anything())
 		);
 
 		$this->parser = $parser;

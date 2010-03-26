@@ -15,3 +15,10 @@ Parsing Expression Grammer(解析表現文法)によるCSS parser
 	pear channel-discover openpear.org
 	pear install openpear/PEG 
 
+
+-TODO
+--引用符の文字列の回避
+
+-specifications 仕様
+--unsupporte vendor prefix
+--unsupporte css hacks. cssハックは現在未対応です。

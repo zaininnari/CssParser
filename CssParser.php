@@ -11,7 +11,6 @@ require_once dirname(__FILE__) . '/CssParser/NodeCreater.php';
 require_once dirname(__FILE__) . '/CssParser/Node.php';
 require_once dirname(__FILE__) . '/CssParser/RuleSet.php';
 require_once dirname(__FILE__) . '/CssParser/AtRule.php';
-require_once dirname(__FILE__) . '/CssParser/AtBlock.php';
 
 require_once dirname(__FILE__) . '/CssParser/IValidate.php';
 require_once dirname(__FILE__) . '/CssParser/AValidate.php';

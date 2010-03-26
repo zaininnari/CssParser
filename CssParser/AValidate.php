@@ -189,7 +189,8 @@ abstract class AValidate implements IValidate
 	 */
 	protected function readAtRule(Array $arr)
 	{
-		//TODO;
+		//TODO
+		return $arr;
 	}
 
 
@@ -253,20 +254,20 @@ abstract class AValidate implements IValidate
 		);
 
 		//余分な空白を取り除く
-		$result['cleanSelector'] = $selector = preg_replace(
+		$result['cleanSelector'] = preg_replace(
 			array('/\s+/', '/\s*>\s*/', '/\s*\+\s*/'),
 			array(' ',     '>',         '+'),
 			$selector
 		);
 
 		// 単純セレクタ（simple selector）や結合子（combinators）に分割する
-		$result['parsedSelector'] = self::selectorParse($selector);
+		$result['parsedSelector'] = self::selectorParse($result['cleanSelector']);
 
 		// 単純セレクタ（simple selector）や結合子（combinators）の構文をチェックする
 		$syntax = self::selectorSyntax($result['parsedSelector']);
 		if (!empty($syntax)) $result['error'] = array_merge($result['error'], $syntax);
 
-		//エラーがなければ成功
+		// エラーがなければ成功
 		if (empty($result['error'])) $result['isValid'] = true;
 
 		return $result;
