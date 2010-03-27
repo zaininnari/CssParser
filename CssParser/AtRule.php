@@ -32,9 +32,23 @@ class CssParser_AtRule implements PEG_IParser
 			$n = '_importUrlOnly'.$n.'Quotes';
 			${$n} = PEG::seq(
 				'@import',
-				PEG::drop(chr(32), $ignore, 'url(', $ignore, $v !== null ? $v : ''),
-				new CssParser_NodeCreater('value', PEG::join(PEG::seq(PEG::many1(PEG::anything(), PEG::drop(PEG::not($v !== null ? PEG::seq(PEG::char('\\', true), $v, $ignore) : $ignore, ')', $ignore, $mediaType))), $v !== null ? PEG::seq(PEG::anything(), PEG::anything()) : PEG::anything()))),
-				PEG::drop($v !== null ? $v : '', $ignore, ')', $ignore),
+				//PEG::drop(chr(32), $ignore, 'url(', $ignore, $v !== null ? $v : ''),
+				PEG::drop(chr(32), $ignore),
+
+				//'url(', PEG::drop($ignore), $v !== null ? $v : '',
+				new CssParser_NodeCreater(
+					'value',
+					PEG::join(
+						PEG::seq(
+							'url(', PEG::drop($ignore), $v !== null ? $v : '',
+							PEG::many1(PEG::anything(), PEG::drop(PEG::not($v !== null ? PEG::seq(PEG::char('\\', true), $v, $ignore) : $ignore, ')', $ignore, $mediaType))),
+							$v !== null ? PEG::seq(PEG::anything(), PEG::anything()) : PEG::anything(),
+							$v !== null ? $v : '', PEG::drop($ignore), ')'
+						)
+					)
+				),
+				//$v !== null ? $v : '', PEG::drop($ignore), ')',
+				PEG::drop($ignore),
 				$mediaType
 			);
 		}
