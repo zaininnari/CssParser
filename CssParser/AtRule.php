@@ -105,6 +105,7 @@ class CssParser_AtRule implements PEG_IParser
 			$import,
 			$media,
 			new CssParser_FontFace(PEG::anything()),
+			new CssParser_Page(PEG::anything()),
 			new CssParser_RuleSet(PEG::anything())
 		);
 

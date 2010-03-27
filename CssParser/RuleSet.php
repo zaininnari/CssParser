@@ -2,7 +2,7 @@
 
 class CssParser_RuleSet implements PEG_IParser
 {
-	protected $parser,$unknown;
+	protected $parser, $unknown, $displayCommnet;
 	protected $type = 'selector';
 
 	/**
@@ -16,7 +16,7 @@ class CssParser_RuleSet implements PEG_IParser
 	{
 		$ignore  = PEG::memo(new CssParser_Ignore($parser));
 		// 無視しないコメント
-		$displayCommnet = PEG::seq('/*', PEG::many(PEG::tail(PEG::not('*/'), PEG::anything())), '*/');
+		$this->displayCommnet = $displayCommnet = PEG::seq('/*', PEG::many(PEG::tail(PEG::not('*/'), PEG::anything())), '*/');
 
 		// エラートークン。「{}」のネストに対応
 		$unknownSeleBlockRef = PEG::choice($displayCommnet, PEG::ref($unknownSeleBlock));
@@ -67,11 +67,12 @@ class CssParser_RuleSet implements PEG_IParser
 
 		$selectorChar = PEG::hook(
 			$rightCommentTrim,
-			PEG::join(PEG::many1(PEG::choice($displayCommnet, PEG::char('{;', true))))
+			$this->selectorChar()
 		);
 
 		$this->unknown = PEG::seq(new CssParser_NodeCreater('unknown', PEG::join(PEG::choice(PEG::many1($unknownSeleBlockRef), $unknownSemicolon))));
-		$parser = PEG::hook(array($this,'map'),
+		$parser = PEG::hook(
+			array($this, 'map'),
 			PEG::seq(
 				new CssParser_NodeCreater($this->type, $selectorChar),
 				PEG::drop('{', $ignore),
@@ -108,12 +109,29 @@ class CssParser_RuleSet implements PEG_IParser
 		return PEG::failure();
 	}
 
+	/**
+	 * 結果を加工する
+	 *
+	 * @param array $arr array
+	 *
+	 * @return Array
+	 */
 	function map(Array $arr)
 	{
 		return array(
 			'selector' => $arr[0],
 			'block'    => $arr[0]->getType() === 'unknown' ? array() : $arr[1]
 		);
+	}
+
+	/**
+	 * セレクタに相当するパーサインスタンスを返す。
+	 *
+	 * @return PEG_IParser
+	 */
+	function selectorChar()
+	{
+		return PEG::join(PEG::many1(PEG::choice($this->displayCommnet, PEG::char('{;', true))));
 	}
 
 }

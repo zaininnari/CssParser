@@ -1,8 +1,8 @@
 <?php
 
-class CssParser_FontFace extends CssParser_RuleSet
+class CssParser_Page extends CssParser_RuleSet
 {
-	protected $type = '@font-face';
+	protected $type = '@page';
 
 	/**
 	 * パースに失敗した場合はPEG_Failureを返すこと。
@@ -26,6 +26,6 @@ class CssParser_FontFace extends CssParser_RuleSet
 	 */
 	function selectorChar()
 	{
-		return PEG::join(PEG::seq('@font-face', new CssParser_Ignore(PEG::anything())));
+		return PEG::join(PEG::seq('@page', PEG::many1(PEG::choice($this->displayCommnet, PEG::char('{;', true)))));
 	}
 }
