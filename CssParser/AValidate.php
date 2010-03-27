@@ -21,17 +21,24 @@ abstract class AValidate implements IValidate
 		'child'        => '/^(>)/',
 		'adjacent'        => '/^(\+)/',
 
-		// 属性セレクタ（Attribute selectors）
-		'attribute'         => '/^([a-zA-Z][\w\-]*(\[[^\]]+\])+)/',
+
 
 		// Pseudo-classes
 		'link'         => '/^(:(link|visited))/',
 		'dynamic'      => '/^(:(link|visited|hover|active|focus))/',
 		'first-child'  => '/^(:first-child)/',
 
-		// Pseudo-elements
+		// language pseudo-class
+		// ISO_639
+		'language'     => '/^(:lang\([a-z\-]+\))/',
 
-		// Attribute selectors
+		// Pseudo-elements
+		'first-line'   => '/^(:first-line)/',
+		'first-letter' => '/^(:first-letter)/',
+		'before'       => '/^(:before)/',
+		'after'        => '/^(:after)/',
+
+		// 属性セレクタ（Attribute selectors）
 		'attribute' => '/^(\[[^\]]+\])/',
 
 		// type
@@ -180,7 +187,7 @@ abstract class AValidate implements IValidate
 			$arr['block'][$key]['isValid'] = $isValid;
 		}
 
-		return array('selector' => $selectors, 'block' => $arr['block']);
+		return array('selector' => new CssParser_Node($arr['selector']->getType(), $selectors, $arr['selector']->getOffset()), 'block' => $arr['block']);
 	}
 
 	/**
@@ -210,6 +217,13 @@ abstract class AValidate implements IValidate
 		return $arr;
 	}
 
+	/**
+	 * TODO
+	 *
+	 * @param array $arr Array
+	 *
+	 * @return Array
+	 */
 	protected function atRuleImport(Array $arr)
 	{
 		if (empty($arr['mediaType'])) return $arr;
@@ -291,7 +305,9 @@ abstract class AValidate implements IValidate
 		if (!empty($syntax)) $result['error'] = array_merge($result['error'], $syntax);
 
 		// エラーがなければ成功
-		if (empty($result['error'])) $result['isValid'] = true;
+		if (empty($result['error'])
+			&& implode('', call_user_func(create_function('Array $a', '$r=array();foreach($a as $b)$r[]=$b[1];return $r;'), $result['parsedSelector'])) === $result['cleanSelector']
+		) $result['isValid'] = true;
 
 		return $result;
 	}
@@ -407,9 +423,9 @@ abstract class AValidate implements IValidate
 
 		//グルーピングルール
 		$group = array(
-			'combinator' => array('descendant', 'child'),
+			'combinator'  => array('descendant', 'child', 'adjacent'),
 			'id'          => array('id', 'class'),
-			'link'        => array('link', 'dynamic'),
+			'link'        => array('link', 'dynamic', 'language', 'first-line', 'first-letter', 'before', 'after'),
 		);
 
 		// 分割したセレクタの構文をチェックする
@@ -418,7 +434,10 @@ abstract class AValidate implements IValidate
 		foreach ($selector as $n => $v) {
 			$test = $v[0];
 			foreach ($group as $name => $member) { // セレクタのグルーピング
-				if(in_array($test, $member)) $test = $name;
+				if (in_array($test, $member)) {
+					$test = $name;
+					break;
+				}
 			}
 			if ($selectorSyntaxList[$before][$test] === false) { //有効かどうかチェックする
 				$result[($n === 0) ? $n : $n - 1] = ($n === 0) ? $selector[$n] : $selector[$n - 1];
