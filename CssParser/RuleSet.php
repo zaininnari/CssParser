@@ -21,10 +21,14 @@ class CssParser_RuleSet implements PEG_IParser
 		$displayCommnet = PEG::seq('/*', PEG::many(PEG::tail(PEG::not('*/'), PEG::anything())), '*/');
 
 		// エラートークン。「{}」のネストに対応
-		$unknownSeleBlockRef = PEG::choice($displayCommnet, PEG::ref($unknownSeleBlock), PEG::anything());
+		$unknownSeleBlockRef = PEG::choice($displayCommnet, PEG::ref($unknownSeleBlock));
 		$unknownSeleBlock =  PEG::seq('{', PEG::many($unknownSeleBlockRef), '}');
 		$unknownBlockRef = PEG::choice($displayCommnet, PEG::ref($unknownBlock), PEG::hook(create_function('$r', 'return $r === false ? PEG::failure() : $r;'), PEG::char('}', true)));
 		$unknownBlock =  PEG::seq('{', PEG::many($unknownBlockRef), '}');
+		$unknownSemicolon = PEG::seq(
+			PEG::many1(PEG::choice($displayCommnet, PEG::char(';', true))),
+			PEG::choice(';', PEG::eos())
+		);
 
 		// PEGの左再帰対策
 		// 右側にあるコメントと空白を削除する
@@ -32,7 +36,7 @@ class CssParser_RuleSet implements PEG_IParser
 		$rightCommentTrim = create_function('$s', 'return preg_replace("/\s*((\/\*[^*]*\*+([^\/][^*]*\*+)*\/)*\s*)*$/", "", $s);');
 
 		$property = PEG::many1(PEG::choice($displayCommnet, PEG::char('{}:', true))); // プロパティ 「color:red」の「color」の部分
-		$value    = PEG::many1(PEG::choice($displayCommnet, PEG::char(';}', true))); // 値 「color:red」の「red」の部分
+		$value    = PEG::many1(PEG::choice($displayCommnet, PEG::char('{;}', true))); // 値 「color:red」の「red」の部分
 
 		$declarationArr = create_function(
 			'Array $a',
@@ -84,7 +88,7 @@ class CssParser_RuleSet implements PEG_IParser
 				PEG::many($declaration),
 				PEG::drop(PEG::choice('}', PEG::eos()))
 			),
-			PEG::seq(new CssParser_NodeCreater('unknown', PEG::join(PEG::many1($unknownSeleBlockRef))))
+			PEG::seq(new CssParser_NodeCreater('unknown', PEG::join(PEG::choice(PEG::many1($unknownSeleBlockRef), $unknownSemicolon))))
 		);
 
 		$this->parser = $parser;
@@ -104,6 +108,7 @@ class CssParser_RuleSet implements PEG_IParser
 	{
 		// パースを行う。
 		$res = $this->parser->parse($context);
+		if ($res instanceof PEG_Failure) return PEG::failure();
 		$result[$this->type] = $res[0];
 		$result['block']     = $res[0]->getType() === 'unknown' ? array() : $res[1];
 		return $result;
