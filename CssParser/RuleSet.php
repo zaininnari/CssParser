@@ -16,7 +16,7 @@ class CssParser_RuleSet implements PEG_IParser
 	{
 		// 無視する要素 空白 コメント
 		$comment = PEG::memo(PEG::many(new CssParser_Comment($parser)));
-		$ignore = PEG::memo(new CssParser_Ignore($parser));
+		$ignore  = PEG::memo(new CssParser_Ignore($parser));
 		// 無視しないコメント
 		$displayCommnet = PEG::seq('/*', PEG::many(PEG::tail(PEG::not('*/'), PEG::anything())), '*/');
 
@@ -74,7 +74,7 @@ class CssParser_RuleSet implements PEG_IParser
 					PEG::many1(
 						PEG::choice(
 							$displayCommnet,
-							PEG::char('{', true)
+							PEG::char('{;', true)
 						)
 					),
 					PEG::drop('{')

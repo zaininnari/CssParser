@@ -190,6 +190,11 @@ abstract class AValidate implements IValidate
 	protected function readAtRule(Array $arr)
 	{
 		//TODO
+		if ($arr['selector'] instanceof CssParser_Node && $arr['selector']->getType() === 'unknown') return $arr;
+		if ($arr['selector'] === '@charset') {
+			//
+		}
+
 		return $arr;
 	}
 

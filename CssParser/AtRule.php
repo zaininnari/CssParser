@@ -32,10 +32,7 @@ class CssParser_AtRule implements PEG_IParser
 			$n = '_importUrlOnly'.$n.'Quotes';
 			${$n} = PEG::seq(
 				'@import',
-				//PEG::drop(chr(32), $ignore, 'url(', $ignore, $v !== null ? $v : ''),
 				PEG::drop(chr(32), $ignore),
-
-				//'url(', PEG::drop($ignore), $v !== null ? $v : '',
 				new CssParser_NodeCreater(
 					'value',
 					PEG::join(
@@ -47,7 +44,6 @@ class CssParser_AtRule implements PEG_IParser
 						)
 					)
 				),
-				//$v !== null ? $v : '', PEG::drop($ignore), ')',
 				PEG::drop($ignore),
 				$mediaType
 			);
