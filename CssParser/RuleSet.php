@@ -2,7 +2,7 @@
 
 class CssParser_RuleSet implements PEG_IParser
 {
-	protected $parser;
+	protected $parser,$unknown;
 	protected $type = 'selector';
 
 	/**
@@ -69,15 +69,17 @@ class CssParser_RuleSet implements PEG_IParser
 			$rightCommentTrim,
 			PEG::join(PEG::many1(PEG::choice($displayCommnet, PEG::char('{;', true))))
 		);
+		$selectorChar = new CssParser_Selector(PEG::anything());
 
-		$parser = PEG::choice(
+
+		$this->unknown = PEG::seq(new CssParser_NodeCreater('unknown', PEG::join(PEG::choice(PEG::many1($unknownSeleBlockRef), $unknownSemicolon))));
+		$parser = PEG::hook(array($this,'map'),
 			PEG::seq(
 				new CssParser_NodeCreater($this->type, $selectorChar),
 				PEG::drop('{', $ignore),
 				PEG::many($declaration),
 				PEG::drop(PEG::choice(PEG::seq('}', $ignore), PEG::eos()))
-			),
-			PEG::seq(new CssParser_NodeCreater('unknown', PEG::join(PEG::choice(PEG::many1($unknownSeleBlockRef), $unknownSemicolon))))
+			)
 		);
 
 		$this->parser = $parser;
@@ -95,12 +97,25 @@ class CssParser_RuleSet implements PEG_IParser
 	 */
 	public function parse(PEG_IContext $context)
 	{
+		$offset = $context->tell();
 		// パースを行う。
-		$res = $this->parser->parse($context);
-		if ($res instanceof PEG_Failure) return PEG::failure();
-		$result[$this->type] = $res[0];
-		$result['block']     = $res[0]->getType() === 'unknown' ? array() : $res[1];
-		return $result;
+		$result = $this->parser->parse($context);
+		if ($result instanceof PEG_Failure) $context->seek($offset);
+		else return $result;
+
+		$result = $this->unknown->parse($context);
+		if ($result instanceof PEG_Failure) $context->seek($offset);
+		else return $this->map($result);
+
+		return PEG::failure();
+	}
+
+	function map(Array $arr)
+	{
+		return array(
+			'selector' => $arr[0],
+			'block'    => $arr[0]->getType() === 'unknown' ? array() : $arr[1]
+		);
 	}
 
 }
