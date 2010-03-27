@@ -24,14 +24,17 @@ abstract class AValidate implements IValidate
 		// 属性セレクタ（Attribute selectors）
 		'attribute'         => '/^([a-zA-Z][\w\-]*(\[[^\]]+\])+)/',
 
-		//Pseudo-classes
+		// Pseudo-classes
 		'link'         => '/^(:(link|visited))/',
 		'dynamic'      => '/^(:(link|visited|hover|active|focus))/',
 		'first-child'  => '/^(:first-child)/',
 
-		//Pseudo-elements
+		// Pseudo-elements
 
-		//type
+		// Attribute selectors
+		'attribute' => '/^(\[[^\]]+\])/',
+
+		// type
 		'type'         => '/^([a-zA-Z][\w\-]*)/',
 	);
 
@@ -344,6 +347,7 @@ abstract class AValidate implements IValidate
 				'type'       => true,
 				'id'         => true,
 				'link'       => true,
+				'attribute'  => true,
 			),
 			'combinator' => array(
 				'end'        => false,
@@ -352,6 +356,7 @@ abstract class AValidate implements IValidate
 				'type'       => true,
 				'id'         => true,
 				'link'       => true,
+				'attribute'  => true,
 			),
 			'universal' => array(
 				'end'        => true,
@@ -360,6 +365,7 @@ abstract class AValidate implements IValidate
 				'type'       => false,
 				'id'         => false,
 				'link'       => true,
+				'attribute'  => true,
 			),
 			'type' => array(
 				'end'        => true,
@@ -368,6 +374,7 @@ abstract class AValidate implements IValidate
 				'type'       => false,
 				'id'         => true,
 				'link'       => true,
+				'attribute'  => true,
 			),
 			'id' => array(
 				'end'        => true,
@@ -376,6 +383,7 @@ abstract class AValidate implements IValidate
 				'type'       => false,
 				'id'         => true,
 				'link'       => true,
+				'attribute'  => true,
 			),
 			'link' => array(
 				'end'        => true,
@@ -384,6 +392,16 @@ abstract class AValidate implements IValidate
 				'type'       => false,
 				'id'         => true,
 				'link'       => true,
+				'attribute'  => true,
+			),
+			'attribute'  => array(
+				'end'        => true,
+				'combinator' => true,
+				'universal'  => false,
+				'type'       => false,
+				'id'         => true,
+				'link'       => true,
+				'attribute'  => true,
 			),
 		);
 
