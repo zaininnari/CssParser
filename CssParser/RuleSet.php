@@ -69,8 +69,6 @@ class CssParser_RuleSet implements PEG_IParser
 			$rightCommentTrim,
 			PEG::join(PEG::many1(PEG::choice($displayCommnet, PEG::char('{;', true))))
 		);
-		$selectorChar = new CssParser_Selector(PEG::anything());
-
 
 		$this->unknown = PEG::seq(new CssParser_NodeCreater('unknown', PEG::join(PEG::choice(PEG::many1($unknownSeleBlockRef), $unknownSemicolon))));
 		$parser = PEG::hook(array($this,'map'),
