@@ -12,10 +12,8 @@ class CssParser_RuleSet implements PEG_IParser
 	 *
 	 * @return unknown_type
 	 */
-	public function __construct(PEG_IParser $parser)
+	function __construct(PEG_IParser $parser)
 	{
-		// 無視する要素 空白 コメント
-		$comment = PEG::memo(PEG::many(new CssParser_Comment($parser)));
 		$ignore  = PEG::memo(new CssParser_Ignore($parser));
 		// 無視しないコメント
 		$displayCommnet = PEG::seq('/*', PEG::many(PEG::tail(PEG::not('*/'), PEG::anything())), '*/');
@@ -69,24 +67,15 @@ class CssParser_RuleSet implements PEG_IParser
 
 		$selectorChar = PEG::hook(
 			$rightCommentTrim,
-			PEG::join(
-				PEG::first(
-					PEG::many1(
-						PEG::choice(
-							$displayCommnet,
-							PEG::char('{;', true)
-						)
-					),
-					PEG::drop('{')
-				)
-			)
+			PEG::join(PEG::many1(PEG::choice($displayCommnet, PEG::char('{;', true))))
 		);
+
 		$parser = PEG::choice(
 			PEG::seq(
 				new CssParser_NodeCreater($this->type, $selectorChar),
-				PEG::drop($ignore),
+				PEG::drop('{', $ignore),
 				PEG::many($declaration),
-				PEG::drop(PEG::choice('}', PEG::eos()))
+				PEG::drop(PEG::choice(PEG::seq('}', $ignore), PEG::eos()))
 			),
 			PEG::seq(new CssParser_NodeCreater('unknown', PEG::join(PEG::choice(PEG::many1($unknownSeleBlockRef), $unknownSemicolon))))
 		);

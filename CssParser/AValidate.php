@@ -192,9 +192,24 @@ abstract class AValidate implements IValidate
 		//TODO
 		if ($arr['selector'] instanceof CssParser_Node && $arr['selector']->getType() === 'unknown') return $arr;
 		if ($arr['selector'] === '@charset') {
-			//
+			//TODO charset validate
+			// http://www.iana.org/assignments/character-sets
+			return $arr;
 		}
+		if ($arr['selector'] === '@import') {
+			// ・ファイルの文字列の形式のチェックはしない
+			//   入力形式によって異なる
+			//   url  -> 入力ドメインへ、相対パスを解決してファイル取得
+			//   string OR file -> ファイル取得しない。
+			// ・メディアタイプの形式はチェックする
+			return $this->atRuleImport($arr);
+		}
+		return $arr;
+	}
 
+	protected function atRuleImport(Array $arr)
+	{
+		if (empty($arr['mediaType'])) return $arr;
 		return $arr;
 	}
 
