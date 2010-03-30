@@ -63,7 +63,7 @@ class CssParser
 	 */
 	static protected function factory($type = null)
 	{
-		$type = $type === null ? 'css21' : $type;
+		$type = $type === null ? 'Css21' : $type;
 		$dirPath = dirname(__FILE__);
 		$subDirName = __CLASS__;
 		$subDirPath = $dirPath . '/' . $subDirName;

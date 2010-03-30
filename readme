@@ -18,7 +18,23 @@ Parsing Expression Grammer(解析表現文法)によるCSS parser
 
 -TODO
 --引用符の文字列の回避
+--IE bug:color gray bug
 
 -specifications 仕様
 --unsupporte vendor prefix
 --unsupporte css hacks. cssハックは現在未対応です。
+--セレクタ、プロパティ、値などに含まれるコメントは無視しません。
+---「text-decoration : underline/**/overline;」は適切な内容ですが、
+   (「text-decoration : underline overline;」と解釈されます。)
+   コメントを無視すると、「underlineoverline」という不明な値になってしまいます。
+   パーサでは、コメント部分をそのまま返しますが、
+   バリデータは適切に変換して処理します。
+   
+   
+-PEAR CodeSniffer
+--PEAR を基準
+以下を除外
+PEAR.NamingConventions.ValidFunctionName
+PEAR.Commenting.FileCommentSniff
+
+--tab-width=4 -v -n --sniffs=PEAR.Files.LineLength,PEAR.Files.IncludingFile,PEAR.Files.LineEndings,PEAR.Classes.ClassDeclaration,PEAR.WhiteSpace.ScopeClosingBrace,PEAR.WhiteSpace.ScopeIndent,PEAR.WhiteSpace.ObjectOperatorIndent,PEAR.Commenting.FunctionComment,PEAR.Commenting.InlineComment,PEAR.Functions.FunctionCallSignature,PEAR.Functions.FunctionCallArgumentSpacing,PEAR.Functions.FunctionDeclaration,PEAR.Functions.ValidDefaultValue,PEAR.ControlStructures.InlineControlStructure,PEAR.ControlStructures.ControlSignature,PEAR.ControlStructures.MultiLineCondition,PEAR.Formatting.MultiLineAssignment,PEAR.NamingConventions.ValidClassName,PEAR.NamingConventions.ValidVariableName ${resource_loc}

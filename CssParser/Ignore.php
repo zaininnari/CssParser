@@ -16,6 +16,8 @@ class CssParser_Ignore implements PEG_IParser
 	function __construct(PEG_IParser $parser)
 	{
 		$comment = new CssParser_Comment($parser);
+		// "space" (U+0020), "tab" (U+0009), "line feed" (U+000A),
+		// "carriage return" (U+000D), and "form feed" (U+000C)
 		$space   = PEG::many1(PEG::char(chr(13).chr(10).chr(9).chr(32).chr(12)));
 		$p       = PEG::many(PEG::choice($space, $comment));
 

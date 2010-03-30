@@ -21,8 +21,6 @@ abstract class AValidate implements IValidate
 		'child'        => '/^(>)/',
 		'adjacent'        => '/^(\+)/',
 
-
-
 		// Pseudo-classes
 		'link'         => '/^(:(link|visited))/',
 		'dynamic'      => '/^(:(link|visited|hover|active|focus))/',
@@ -69,12 +67,13 @@ abstract class AValidate implements IValidate
 	 */
 	protected $propertyMethodPrefix = 'property';
 
-	protected $length     = '(?:(?:\+|-)?(?:[0-9]{1,}(¥.[0-9]+)?|¥.[0-9]+)(?:px|em|ex|in|cm|mm|pt|pc)|0)';
-	protected $lengthPlus = '(?:\+?(?:[0-9]{1,}(¥.[0-9]+)?|¥.[0-9]+)(?:px|em|ex|in|cm|mm|pt|pc)|0)';
-	protected $percentage = '(?:(?:\+|-)?(?:[0-9]{1,}%(¥.[0-9]+)?|¥.[0-9]+))';
-	protected $percentagePlus = '(?:\+?(?:[0-9]{1,}%(¥.[0-9]+)?|¥.[0-9]+))';
-	protected $color = '((?:#[0-9a-fA-F]{3})|(?:#[0-9a-zA-Z]{6})|(?:rgb\(\s*(?:[0-2][0-5]{2}|[0-1][0-9]{0,2})\s*,\s*(?:[0-2][0-5]{2}|[0-1][0-9]{0,2})\s*,\s*(?:[0-2][0-5]{2}|[0-1][0-9]{0,2})\s*\))|(?:rgb\(\s*(?:[0-9]{1,3}|0)%\s*,\s*(?:[0-9]{1,3}|0)%\s*,\s*(?:[0-9]{1,3}|0)%\s*\))|(?:Black|Silver|Gray|White|Maroon|Red|Purple|Fuchsia|Green|Lime|Olive|Yellow|Navy|Blue|Teal|Aqua|Orange)|(?:aliceblue|antiquewhite|aqua|aquamarine|azure|beige|bisque|black|blanchedalmond|blue|blueviolet|brass|brown|burlywood|cadetblue|chartreuse|chocolate|coolcopper|copper|coral|cornflower|cornflowerblue|cornsilk|crimson|cyan|darkblue|darkbrown|darkcyan|darkgoldenrod|darkgray|darkgreen|darkkhaki|darkmagenta|darkolivegreen|darkorange|darkorchid|darkred|darksalmon|darkseagreen|darkslateblue|darkslategray|darkturquoise|darkviolet|deeppink|deepskyblue|dimgray|dodgerblue|feldsper|firebrick|floralwhite|forestgreen|fuchsia|gainsboro|ghostwhite|gold|goldenrod|gray|green|greenyellow|honeydew|hotpink|indianred|indigo|ivory|khaki|lavender|lavenderblush|lawngreen|lemonchiffon|lightblue|lightcoral|lightcyan|lightgoldenrodyellow|lightgreen|lightgrey|lightpink|lightsalmon|lightseagreen|lightskyblue|lightslategray|lightsteelblue|lightyellow|lime|limegreen|linen|magenta|maroon|mediumaquamarine|mediumblue|mediumorchid|mediumpurple|mediumseagreen|mediumslateblue|mediumspringgreen|mediumturquoise|mediumvioletred|midnightblue|mintcream|mistyrose|moccasin|navajowhite|navy|oldlace|olive|olivedrab|orange|orangered|orchid|palegoldenrod|palegreen|paleturquoise|palevioletred|papayawhip|peachpuff|peru|pink|plum|powderblue|purple|red|richblue|rosybrown|royalblue|saddlebrown|salmon|sandybrown|seagreen|seashell|sienna|silver|skyblue|slateblue|slategray|snow|springgreen|steelblue|tan|teal|thistle|tomato|turquoise|violet|wheat|white|whitesmoke|yellow|yellowgreen)|(?:Background|Window|WindowText|WindowFrame|ActiveBorder|InactiveBorder|ActiveCaption|InactiveCaption|CaptionText|InactiveCaptionText|Scrollbar|AppWorkspace|Highlight|HighlightText|GrayText|Menu|MenuText|ButtonFace|ButtonText|ButtonHighlight|ButtonShadow|ThreeDFace|ThreeDHighlight|ThreeDShadow|ThreeDLightShadow|ThreeDDarkShadow|InfoText|InfoBackground))';
-	protected $uri = '(?:.*?)';
+	protected $length         = '(?:(?:\+|-|)(?:(?:[0-9]{1,}(\.[0-9]+)?|\.[0-9]+)(?:px|em|ex|in|cm|mm|pt|pc)|0))';
+	protected $lengthPlus     = '(?:(?:\+|)(?:(?:[0-9]{1,}(\.[0-9]+)?|\.[0-9]+)(?:px|em|ex|in|cm|mm|pt|pc)|0))';
+	protected $percentage     = '(?:(?:\+|-|)(?:[0-9]{1,}(\.[0-9]+)?|\.[0-9]+)%)';
+	protected $percentagePlus = '(?:\+?(?:[0-9]{1,}(\.[0-9]+)?|\.[0-9]+)%)';
+	//protected $color          = '((?:#[0-9a-fA-F]{3})|(?:#[0-9a-zA-Z]{6})|(?:rgb\(\s*(?:[0-2][0-5]{2}|[0-1][0-9]{0,2})\s*,\s*(?:[0-2][0-5]{2}|[0-1][0-9]{0,2})\s*,\s*(?:[0-2][0-5]{2}|[0-1][0-9]{0,2})\s*\))|(?:rgb\(\s*(?:[0-9]{1,3}|0)%\s*,\s*(?:[0-9]{1,3}|0)%\s*,\s*(?:[0-9]{1,3}|0)%\s*\))|(?:Black|Silver|Gray|White|Maroon|Red|Purple|Fuchsia|Green|Lime|Olive|Yellow|Navy|Blue|Teal|Aqua|Orange)|(?:aliceblue|antiquewhite|aqua|aquamarine|azure|beige|bisque|black|blanchedalmond|blue|blueviolet|brass|brown|burlywood|cadetblue|chartreuse|chocolate|coolcopper|copper|coral|cornflower|cornflowerblue|cornsilk|crimson|cyan|darkblue|darkbrown|darkcyan|darkgoldenrod|darkgray|darkgreen|darkkhaki|darkmagenta|darkolivegreen|darkorange|darkorchid|darkred|darksalmon|darkseagreen|darkslateblue|darkslategray|darkturquoise|darkviolet|deeppink|deepskyblue|dimgray|dodgerblue|feldsper|firebrick|floralwhite|forestgreen|fuchsia|gainsboro|ghostwhite|gold|goldenrod|gray|green|greenyellow|honeydew|hotpink|indianred|indigo|ivory|khaki|lavender|lavenderblush|lawngreen|lemonchiffon|lightblue|lightcoral|lightcyan|lightgoldenrodyellow|lightgreen|lightgrey|lightpink|lightsalmon|lightseagreen|lightskyblue|lightslategray|lightsteelblue|lightyellow|lime|limegreen|linen|magenta|maroon|mediumaquamarine|mediumblue|mediumorchid|mediumpurple|mediumseagreen|mediumslateblue|mediumspringgreen|mediumturquoise|mediumvioletred|midnightblue|mintcream|mistyrose|moccasin|navajowhite|navy|oldlace|olive|olivedrab|orange|orangered|orchid|palegoldenrod|palegreen|paleturquoise|palevioletred|papayawhip|peachpuff|peru|pink|plum|powderblue|purple|red|richblue|rosybrown|royalblue|saddlebrown|salmon|sandybrown|seagreen|seashell|sienna|silver|skyblue|slateblue|slategray|snow|springgreen|steelblue|tan|teal|thistle|tomato|turquoise|violet|wheat|white|whitesmoke|yellow|yellowgreen)|(?:Background|Window|WindowText|WindowFrame|ActiveBorder|InactiveBorder|ActiveCaption|InactiveCaption|CaptionText|InactiveCaptionText|Scrollbar|AppWorkspace|Highlight|HighlightText|GrayText|Menu|MenuText|ButtonFace|ButtonText|ButtonHighlight|ButtonShadow|ThreeDFace|ThreeDHighlight|ThreeDShadow|ThreeDLightShadow|ThreeDDarkShadow|InfoText|InfoBackground))';
+	protected $color          = '((?:#[0-9a-fA-F]{3})|(?:#[0-9a-zA-Z]{6})|(?:rgb\((?:\s*(?:\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/)*\s*)*(?:[0-2][0-5]{2}|[0-1][0-9]{0,2})(?:\s*(?:\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/)*\s*)*,(?:\s*(?:\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/)*\s*)*(?:[0-2][0-5]{2}|[0-1][0-9]{0,2})(?:\s*(?:\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/)*\s*)*,(?:\s*(?:\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/)*\s*)*(?:[0-2][0-5]{2}|[0-1][0-9]{0,2})(?:\s*(?:\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/)*\s*)*\))|(?:rgb\((?:\s*(?:\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/)*\s*)*(?:[0-9]{1,3}|0)%(?:\s*(?:\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/)*\s*)*,(?:\s*(?:\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/)*\s*)*(?:[0-9]{1,3}|0)%(?:\s*(?:\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/)*\s*)*,(?:\s*(?:\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/)*\s*)*(?:[0-9]{1,3}|0)%(?:\s*(?:\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/)*\s*)*\))|(?:Black|Silver|Gray|White|Maroon|Red|Purple|Fuchsia|Green|Lime|Olive|Yellow|Navy|Blue|Teal|Aqua)|(?:Orange)|(?:aliceblue|antiquewhite|aqua|aquamarine|azure|beige|bisque|black|blanchedalmond|blue|blueviolet|brass|brown|burlywood|cadetblue|chartreuse|chocolate|coolcopper|copper|coral|cornflower|cornflowerblue|cornsilk|crimson|cyan|darkblue|darkbrown|darkcyan|darkgoldenrod|darkgray|darkgreen|darkkhaki|darkmagenta|darkolivegreen|darkorange|darkorchid|darkred|darksalmon|darkseagreen|darkslateblue|darkslategray|darkturquoise|darkviolet|deeppink|deepskyblue|dimgray|dodgerblue|feldsper|firebrick|floralwhite|forestgreen|fuchsia|gainsboro|ghostwhite|gold|goldenrod|gray|green|greenyellow|honeydew|hotpink|indianred|indigo|ivory|khaki|lavender|lavenderblush|lawngreen|lemonchiffon|lightblue|lightcoral|lightcyan|lightgoldenrodyellow|lightgreen|lightgrey|lightpink|lightsalmon|lightseagreen|lightskyblue|lightslategray|lightsteelblue|lightyellow|lime|limegreen|linen|magenta|maroon|mediumaquamarine|mediumblue|mediumorchid|mediumpurple|mediumseagreen|mediumslateblue|mediumspringgreen|mediumturquoise|mediumvioletred|midnightblue|mintcream|mistyrose|moccasin|navajowhite|navy|oldlace|olive|olivedrab|orange|orangered|orchid|palegoldenrod|palegreen|paleturquoise|palevioletred|papayawhip|peachpuff|peru|pink|plum|powderblue|purple|red|richblue|rosybrown|royalblue|saddlebrown|salmon|sandybrown|seagreen|seashell|sienna|silver|skyblue|slateblue|slategray|snow|springgreen|steelblue|tan|teal|thistle|tomato|turquoise|violet|wheat|white|whitesmoke|yellow|yellowgreen)|(?:Background|Window|WindowText|WindowFrame|ActiveBorder|InactiveBorder|ActiveCaption|InactiveCaption|CaptionText|InactiveCaptionText|Scrollbar|AppWorkspace|Highlight|HighlightText|GrayText|Menu|MenuText|ButtonFace|ButtonText|ButtonHighlight|ButtonShadow|ThreeDFace|ThreeDHighlight|ThreeDShadow|ThreeDLightShadow|ThreeDDarkShadow|InfoText|InfoBackground))';
+	protected $uri            = '(?:.*?)';
 
 	protected $css;
 
@@ -268,7 +267,8 @@ abstract class AValidate implements IValidate
 	{
 		$method = $this->getPropertyMethod($property);
 		if ($method === false) return false; // メソッドが存在しない/適当でない
-		return call_user_func(array($this, $method), $value);
+		$function = array($this, $method);
+		return is_array($value) ? call_user_func_array($function, $value) : call_user_func($function, $value);
 	}
 
 	/**
@@ -450,6 +450,93 @@ abstract class AValidate implements IValidate
 	}
 
 	/**
+	 * value のコメント・改行を削除し、半角空白で分割して返す。
+	 *
+	 * @param string $val css value
+	 *
+	 * @return Array
+	 */
+	static protected function splitSpace($val)
+	{
+		$comment = '(?:\/\*[^*]*\*+([^\/][^*]*\*+)*\/)';
+		$patternArr = array(
+			'((?i:rgb|hsl|rgba|hsla|url))\(('.$comment.'|\\\\\)|[^\)])*\)',
+			'("('.$comment.'|\\\"|[^"])*")',
+		);
+		$pattern = '('.implode('|', $patternArr).')';
+		preg_match_all('/'.$pattern.'/', $val, $matches, PREG_OFFSET_CAPTURE);
+		$matches = $matches[0];
+
+		$res = array('');
+		$before = 0;
+
+		// 1 連続したエスケープするトークンは、連結する
+		// 2 連続しないエスケープするトークン間のトークンは、半角空白文字による分割を試みる
+		for ($i=0;$i<count($matches);$i++) {
+			$len = $matches[$i][1] + strlen($matches[$i][0]); // 現在の文字列の終点offset
+			// 現在の文字列の終点offset から 次点の文字列の開始offsetまでの距離
+			$length = isset($matches[$i+1][1]) ? $matches[$i+1][1] - $len : strlen($val) - $len;
+			// 配列の添字
+			$count = isset($res) ? count($res) - 1 : 0;
+			if ($before === 0) $res[$count] =  $res[$count] . $matches[$i][0];
+			else $res[] = $matches[$i][0];
+			$str = substr($val, $len, $length);
+			$res = array_merge($res, preg_split('/\s* \s*/', $str, -1, PREG_SPLIT_NO_EMPTY));
+			$before = $length;
+		}
+		if ($i === 0) $res = preg_split('/\s* \s*/', $val, -1, PREG_SPLIT_NO_EMPTY);
+		return $res;
+	}
+
+	/**
+	 * css内部定義の	<margin-width>を返す。
+	 *
+	 * @return string
+	 */
+	protected function marginWidth()
+	{
+		return $this->length . '|' . $this->percentage . '|' . 'auto';
+	}
+
+	/**
+	 * css内部定義の	<padding-width>を返す。
+	 *
+	 * @return string
+	 */
+	protected function paddingWidth()
+	{
+		return $this->lengthPlus . '|' . $this->percentagePlus;
+	}
+
+	/**
+	 * css内部定義の	<border-width>を返す。
+	 *
+	 * @return string
+	 */
+	protected function borderWidth()
+	{
+		return 'thin|medium|thick|'. $this->lengthPlus . '|' . $this->percentagePlus;
+	}
+
+	/**
+	 * margin / padding
+	 *
+	 * @param string $val          css value
+	 * @param string $patternOne   css内部定義
+	 * @param string $patternMulti css内部定義
+	 *
+	 * @return boolean
+	 */
+	static protected function _propertyMarginOrPaddingOrBorder($val, $patternOne, $patternMulti)
+	{
+		$arr = self::splitSpace($val);
+		if (count($arr) > 4) return false;
+		if (count($arr) === 1) return preg_match('/^'.$patternOne.'$/i', $val) === 1;
+		foreach ($arr as $v) if(!preg_match('/^'.$patternMulti.'$/i', $v)) return false;
+		return true;
+	}
+
+	/**
 	 * check css value
 	 *
 	 * @param string $val css value
@@ -458,28 +545,43 @@ abstract class AValidate implements IValidate
 	 */
 	protected function color($val)
 	{
-		/*$regexs = array(
+		/*$c = '(?:\s*(?:\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/)*\s*)*';
+		$rgb1 = '(?:[0-2][0-5]{2}|[0-1][0-9]{0,2})';
+		$rgb2 = '(?:[0-9]{1,3}|0)%';
+		$regexs = array(
 			// #000
 			'(?:#[0-9a-fA-F]{3})',
 			// #000000
 			'(?:#[0-9a-zA-Z]{6})',
 			// rgb(255,0,0)
-			'(?:rgb\(\s*(?:[0-2][0-5]{2}|[0-1][0-9]{0,2})\s*,\s*(?:[0-2][0-5]{2}|[0-1][0-9]{0,2})\s*,\s*(?:[0-2][0-5]{2}|[0-1][0-9]{0,2})\s*\))',
+			'(?:rgb\('.$c.$rgb1.$c.','.$c.$rgb1.$c.','.$c.$rgb1.$c.'\))',
 			// rgb(100%,0%,0%)
-			'(?:rgb\(\s*(?:[0-9]{1,3}|0)%\s*,\s*(?:[0-9]{1,3}|0)%\s*,\s*(?:[0-9]{1,3}|0)%\s*\))',
-			// 16 + 1
+			'(?:rgb\('.$c.$rgb2.$c.','.$c.$rgb2.$c.','.$c.$rgb2.$c.'\))',
+			// 基本カラー 16
 			'(?:Black|Silver|Gray|White|Maroon|Red|Purple|Fuchsia|Green|Lime|Olive|Yellow|Navy|Blue|Teal|Aqua)',
-			// css2.1 add
+			// 追加基本カラー css2.1 add
 			'(?:Orange)',
 			// 147
 			'(?:aliceblue|antiquewhite|aqua|aquamarine|azure|beige|bisque|black|blanchedalmond|blue|blueviolet|brass|brown|burlywood|cadetblue|chartreuse|chocolate|coolcopper|copper|coral|cornflower|cornflowerblue|cornsilk|crimson|cyan|darkblue|darkbrown|darkcyan|darkgoldenrod|darkgray|darkgreen|darkkhaki|darkmagenta|darkolivegreen|darkorange|darkorchid|darkred|darksalmon|darkseagreen|darkslateblue|darkslategray|darkturquoise|darkviolet|deeppink|deepskyblue|dimgray|dodgerblue|feldsper|firebrick|floralwhite|forestgreen|fuchsia|gainsboro|ghostwhite|gold|goldenrod|gray|green|greenyellow|honeydew|hotpink|indianred|indigo|ivory|khaki|lavender|lavenderblush|lawngreen|lemonchiffon|lightblue|lightcoral|lightcyan|lightgoldenrodyellow|lightgreen|lightgrey|lightpink|lightsalmon|lightseagreen|lightskyblue|lightslategray|lightsteelblue|lightyellow|lime|limegreen|linen|magenta|maroon|mediumaquamarine|mediumblue|mediumorchid|mediumpurple|mediumseagreen|mediumslateblue|mediumspringgreen|mediumturquoise|mediumvioletred|midnightblue|mintcream|mistyrose|moccasin|navajowhite|navy|oldlace|olive|olivedrab|orange|orangered|orchid|palegoldenrod|palegreen|paleturquoise|palevioletred|papayawhip|peachpuff|peru|pink|plum|powderblue|purple|red|richblue|rosybrown|royalblue|saddlebrown|salmon|sandybrown|seagreen|seashell|sienna|silver|skyblue|slateblue|slategray|snow|springgreen|steelblue|tan|teal|thistle|tomato|turquoise|violet|wheat|white|whitesmoke|yellow|yellowgreen)',
 			// システムカラー
 			'(?:Background|Window|WindowText|WindowFrame|ActiveBorder|InactiveBorder|ActiveCaption|InactiveCaption|CaptionText|InactiveCaptionText|Scrollbar|AppWorkspace|Highlight|HighlightText|GrayText|Menu|MenuText|ButtonFace|ButtonText|ButtonHighlight|ButtonShadow|ThreeDFace|ThreeDHighlight|ThreeDShadow|ThreeDLightShadow|ThreeDDarkShadow|InfoText|InfoBackground)',
 		);
-		foreach ($regexs as $regex) {
-			if(preg_match('/^'.$regex.'$/i', $val)) return true;
-		}*/
+		foreach ($regexs as $regex) if(preg_match('/^'.$regex.'$/i', $val)) return true;
+		return false;
+		*/
 		return preg_match('/^'.$this->color.'$/i', $val) === 1;
+	}
+
+	/**
+	 * check css value
+	 *
+	 * @param string $val css value
+	 *
+	 * @return boolean
+	 */
+	protected function propertyColor($val)
+	{
+		return $this->color($val);
 	}
 
 	/**
@@ -491,7 +593,7 @@ abstract class AValidate implements IValidate
 	 */
 	protected function propertyMarginTop($val)
 	{
-		$pattern = '('.$this->length.'|'.$this->percentage.'|auto|inherit)';
+		$pattern = '('. $this->marginWidth() .'|inherit)';
 		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
@@ -540,10 +642,9 @@ abstract class AValidate implements IValidate
 	 */
 	protected function propertyMargin($val)
 	{
-		$arr = preg_split('/\s* \s*/', $val, -1, PREG_SPLIT_NO_EMPTY);
-		if(count($arr) > 4) return false;
-		foreach ($arr as $v) if(!$this->callPropertyMethod('margin-top', $v)) return false;
-		return true;
+		$patternOne   = '(inherit|'.$this->marginWidth().')';
+		$patternMulti = '('.$this->marginWidth().')';
+		return self::_propertyMarginOrPaddingOrBorder($val, $patternOne, $patternMulti);
 	}
 
 	/**
@@ -555,7 +656,7 @@ abstract class AValidate implements IValidate
 	 */
 	protected function propertyPaddingTop($val)
 	{
-		$pattern = '('.$this->lengthPlus.'|'.$this->percentagePlus.'|inherit)';
+		$pattern = '('.$this->paddingWidth().'|inherit)';
 		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
@@ -604,10 +705,9 @@ abstract class AValidate implements IValidate
 	 */
 	protected function propertyPadding($val)
 	{
-		$arr = preg_split('/\s* \s*/', $val, -1, PREG_SPLIT_NO_EMPTY);
-		if(count($arr) > 4) return false;
-		foreach ($arr as $v) if(!$this->callPropertyMethod('padding-top', $v)) return false;
-		return true;
+		$patternOne   = '(inherit|'.$this->paddingWidth().')';
+		$patternMulti = '('.$this->paddingWidth().')';
+		return self::_propertyMarginOrPaddingOrBorder($val, $patternOne, $patternMulti);
 	}
 
 	/**
@@ -619,7 +719,7 @@ abstract class AValidate implements IValidate
 	 */
 	protected function propertyBorderTopWidth($val)
 	{
-		$pattern = '('.$this->lengthPlus.'|thin|medium|thick|inherit)';
+		$pattern = '('.$this->borderWidth().'|inherit)';
 		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
@@ -662,16 +762,16 @@ abstract class AValidate implements IValidate
 	/**
 	 * check css value
 	 *
-	 * @param string $val css value
+	 * @param string  $val    css value
+	 * @param boolean $return trueの場合、パターンを返す。
 	 *
-	 * @return boolean
+	 * @return boolean / string
 	 */
-	protected function propertyBorderWidth($val)
+	protected function propertyBorderWidth($val, $return = false)
 	{
-		$arr = preg_split('/\s* \s*/', $val, -1, PREG_SPLIT_NO_EMPTY);
-		if(count($arr) > 4) return false;
-		foreach ($arr as $v) if(!$this->callPropertyMethod('border-top-width', $v)) return false;
-		return true;
+		$patternOne   = '(inherit|'.$this->borderWidth().')';
+		$patternMulti = '('.$this->borderWidth().')';
+		return $return === false ? self::_propertyMarginOrPaddingOrBorder($val, $patternOne, $patternMulti) : $patternMulti;
 	}
 
 	/**
@@ -683,7 +783,7 @@ abstract class AValidate implements IValidate
 	 */
 	protected function propertyBorderTopColor($val)
 	{
-		$pattern = '('.$this->color.'|transparent|inherit)';
+		$pattern = '(transparent|inherit|'.$this->color.')';
 		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
@@ -726,16 +826,16 @@ abstract class AValidate implements IValidate
 	/**
 	 * check css value
 	 *
-	 * @param string $val css value
+	 * @param string  $val    css value
+	 * @param boolean $return trueの場合、パターンを返す。
 	 *
-	 * @return boolean
+	 * @return boolean / string
 	 */
-	protected function propertyBorderColor($val)
+	protected function propertyBorderColor($val, $return = false)
 	{
-		$arr = preg_split('/\s* \s*/', $val, -1, PREG_SPLIT_NO_EMPTY);
-		if(count($arr) > 4) return false;
-		foreach ($arr as $v) if(!$this->callPropertyMethod('border-top-color', $v)) return false;
-		return true;
+		$patternOne   = '(inherit|transparent|'.$this->color.')';
+		$patternMulti = '(transparent|'.$this->color.')';
+		return $return === false ? self::_propertyMarginOrPaddingOrBorder($val, $patternOne, $patternMulti) : $patternMulti;
 	}
 
 	/**
@@ -790,16 +890,16 @@ abstract class AValidate implements IValidate
 	/**
 	 * check css value
 	 *
-	 * @param string $val css value
+	 * @param string  $val    css value
+	 * @param boolean $return trueの場合、パターンを返す。
 	 *
-	 * @return boolean
+	 * @return boolean / string
 	 */
-	protected function propertyBorderStyle($val)
+	protected function propertyBorderStyle($val, $return = false)
 	{
-		$arr = preg_split('/\s* \s*/', $val, -1, PREG_SPLIT_NO_EMPTY);
-		if(count($arr) > 4) return false;
-		foreach ($arr as $v) if(!$this->callPropertyMethod('border-top-style', $v)) return false;
-		return true;
+		$patternOne   = '(none|hidden|dotted|dashed|solid|double|groove|ridge|inset|outset|inherit)';
+		$patternMulti = '(none|hidden|dotted|dashed|solid|double|groove|ridge|inset|outset)';
+		return $return === false ? self::_propertyMarginOrPaddingOrBorder($val, $patternOne, $patternMulti) : $patternMulti;
 	}
 
 	/**
@@ -811,21 +911,32 @@ abstract class AValidate implements IValidate
 	 */
 	protected function propertyBorderTop($val)
 	{
-		$values = preg_split('/\s* \s*/', $val, -1, PREG_SPLIT_NO_EMPTY);
-		$regArr = array('border-top-width', 'border-top-style', 'color');
+		$patternArr = array(
+			// <border-top-color> = <color> | transparent
+			$this->callPropertyMethod('border-color', $val, true),
+			// <<border-style> = none|hidden|dotted|dashed|solid|double|groove|ridge|inset|outset
+			$this->callPropertyMethod('border-style', $val, true),
+			// <border-width> = thin | medium | thick | <lengthPlus>
+			$this->callPropertyMethod('border-width', $val, true),
+		);
+		$arr = self::splitSpace($val);
 
-		if (count($values) > 3) return false; // 4個以上はありえない
-		// 1個の場合は、別途処理
-		if (count($values) === 1 && preg_match('/^inherit$/i', $values[0])) return true;
-		foreach ($values as $i => $value) {
-			$before = count($regArr);
-			foreach ($regArr as $n => $reg) {
-				if ($this->callPropertyMethod($reg, $value)) {
-					unset($regArr[$n]);
+		if (count($arr) > 4) return false;
+		if (count($arr) === 1) {
+			if ($arr[0] === 'inherit') return true;
+			foreach ($patternArr as $v) if (!preg_match('/^'.$v.'$/i', $arr[0])) return true;
+			return false;
+		}
+
+		foreach ($arr as $value) {
+			$before = count($patternArr);
+			foreach ($patternArr as $n => $pattern) {
+				if (preg_match('/^'.$pattern.'$/i', $arr[0])) {
+					unset($patternArr[$n]);
 					break;
 				}
 			}
-			if (count($regArr) === $before) return false;
+			if (count($patternArr) === $before) return false;
 		}
 		return true;
 	}
@@ -898,9 +1009,56 @@ abstract class AValidate implements IValidate
 	 *
 	 * @return boolean
 	 */
-	protected function propertyColor($val)
+	protected function propertyTextIndent($val)
 	{
-		return $this->color($val);
+		$pattern = '('.$this->length.'|'. $this->percentage .'|inherit)';
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
+	}
+
+	/**
+	 * check css value
+	 *
+	 * @param string $val css value
+	 *
+	 * @return boolean
+	 */
+	protected function propertyTextAlign($val)
+	{
+		$pattern = '(left|right|center|justify|inherit)';
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
+	}
+
+	/**
+	 * check css value
+	 *
+	 * @param string $val css value
+	 *
+	 * @return boolean
+	 */
+	protected function propertyTextDecoration($val)
+	{
+		$values = self::splitSpace($val);
+		$regArr = array('underline', 'overline', 'line-through', 'blink');
+
+		if (count($values) === 1) { // 1個の場合は、'none','inherit'が含まれる可能性がある
+			$regArr = array_merge($regArr, array('none', 'inherit'));
+			if (!preg_match("/^(?:".implode('|', $regArr).")$/", $values[0], $m)) {
+				return false;
+			}
+		} else {
+			foreach ($values as $value) {
+				$before = count($regArr);
+				foreach ($regArr as $n => $reg) {
+					if (preg_match("/^(?:$reg)$/", $value)) {
+						unset($regArr[$n]);
+						break;
+					}
+				}
+				if (count($regArr) === $before) return false; // 変化しない => マッチしなかった
+			}
+		}
+
+		return true;
 	}
 
 }
