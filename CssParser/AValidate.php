@@ -67,6 +67,15 @@ abstract class AValidate implements IValidate
 	 */
 	protected $propertyMethodPrefix = 'property';
 
+	/**
+	 * propertyのリスト。
+	 *
+	 * @var array
+	 */
+	protected $propertyList = null;
+
+	protected $integer        = '(?:(?:\+|-|)(?:[0-9]{1,}))';
+	protected $numberPlus     = '(?:\+|)(?:[0-9]{1,}(\.[0-9]+)?|\.[0-9]+)';
 	protected $length         = '(?:(?:\+|-|)(?:(?:[0-9]{1,}(\.[0-9]+)?|\.[0-9]+)(?:px|em|ex|in|cm|mm|pt|pc)|0))';
 	protected $lengthPlus     = '(?:(?:\+|)(?:(?:[0-9]{1,}(\.[0-9]+)?|\.[0-9]+)(?:px|em|ex|in|cm|mm|pt|pc)|0))';
 	protected $percentage     = '(?:(?:\+|-|)(?:[0-9]{1,}(\.[0-9]+)?|\.[0-9]+)%)';
@@ -96,12 +105,16 @@ abstract class AValidate implements IValidate
 	 */
 	protected function initialize()
 	{
+		/////////////////////////////////////////////////////////////////
 		// valueをチェックするメソッドのprefixのチェック。
+		/////////////////////////////////////////////////////////////////
 		if (!preg_match(self::METHOD, $this->propertyMethodPrefix)) {
-			throw new OutOfBoundsException();
+			throw new OutOfBoundsException('invalid $propertyMethodPrefix');
 		}
 
+		/////////////////////////////////////////////////////////////////
 		// セレクタのリストを対応するCSSのレベルに合わせる
+		/////////////////////////////////////////////////////////////////
 		$_selectorParseList = $this->selectorParseListOrigin;
 		foreach ($this->removeSelectorParseList as $remove) {
 			if (isset($_selectorParseList[$remove])) {
@@ -109,6 +122,22 @@ abstract class AValidate implements IValidate
 			}
 		}
 		$this->selectorParseList = $_selectorParseList;
+
+		/////////////////////////////////////////////////////////////////
+		// propertyのリストを作成する
+		/////////////////////////////////////////////////////////////////
+		$ref = new ReflectionClass(__CLASS__);
+		$methods = $ref->getMethods();
+		$len = strlen($this->propertyMethodPrefix);
+		$propertyList = array();
+		foreach ($methods as $method) {
+			if (strpos($method->name, $this->propertyMethodPrefix) === 0 && strlen($method->name) > $len) {
+				$property = preg_replace('/^'.$this->propertyMethodPrefix.'/', '', $method->name, 1);
+				$property = strtolower(preg_replace('/([A-Z])/', '-$1', $property));
+				$propertyList[$property] = $method->name;
+			}
+		}
+		$this->propertyList = $propertyList;
 	}
 
 
@@ -239,17 +268,10 @@ abstract class AValidate implements IValidate
 	 */
 	protected function getPropertyMethod($property)
 	{
-		$property = preg_split('/-/', trim($property), -1, PREG_SPLIT_NO_EMPTY); // for vendor prefixes
-		if (count($property) === 0) return false;
-		array_walk($property, create_function('&$s', '$s{0}=strtoupper($s{0});return $s;')); // for PHP < 5.3
-		$method = $this->propertyMethodPrefix . implode('', $property);
-		if (preg_match(self::METHOD, $method) === 0  // メソッド名が適切でない
-			|| method_exists($this, $method) === false // メソッド(cssプロパティ)が存在しない
-		) {
-			return false;
-		}
-
-		return $method;
+		//if (strpos($property, '--') !== false) return false;
+		$property = strtolower(trim($property));
+		$_property = $property{0} === '-' ? $property : '-'.$property; // for vendor prefixes
+		return isset($this->propertyList[$_property]) ? $this->propertyList[$_property] : false;
 	}
 
 	/**
@@ -263,6 +285,7 @@ abstract class AValidate implements IValidate
 	protected function callPropertyMethod()
 	{
 		$args = func_get_args();
+		if (!isset($args[0], $args[1]) || !is_string($args[0]) || !is_string($args[0])) return false;
 		$method = $this->getPropertyMethod(array_shift($args));
 		if ($method === false) return false; // メソッドが存在しない/適当でない
 		return call_user_func_array(array($this, $method), $args);
@@ -911,7 +934,7 @@ abstract class AValidate implements IValidate
 		$patternArr = array(
 			// <border-top-color> = <color> | transparent
 			$this->callPropertyMethod('border-color', $val, true),
-			// <<border-style> = none|hidden|dotted|dashed|solid|double|groove|ridge|inset|outset
+			// <border-style> = none|hidden|dotted|dashed|solid|double|groove|ridge|inset|outset
 			$this->callPropertyMethod('border-style', $val, true),
 			// <border-width> = thin | medium | thick | <lengthPlus>
 			$this->callPropertyMethod('border-width', $val, true),
@@ -928,7 +951,7 @@ abstract class AValidate implements IValidate
 		foreach ($arr as $value) {
 			$before = count($patternArr);
 			foreach ($patternArr as $n => $pattern) {
-				if (preg_match('/^'.$pattern.'$/i', $arr[0])) {
+				if (preg_match('/^'.$pattern.'$/i', $value)) {
 					unset($patternArr[$n]);
 					break;
 				}
@@ -996,6 +1019,226 @@ abstract class AValidate implements IValidate
 	protected function propertyDisplay($val)
 	{
 		$pattern = '(inline|block|list-item|run-in|compact|marker|table|inline-table|table-row-group|table-header-group|table-footer-group|table-row|table-column-group|table-column|table-cell|table-caption|none|inherit)';
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
+	}
+
+	/**
+	 * check css value
+	 *
+	 * @param string $val css value
+	 *
+	 * @return boolean
+	 */
+	protected function propertyPosition($val)
+	{
+		$pattern = '(static|relative|absolute|fixed|inherit)';
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
+	}
+
+	/**
+	 * check css value
+	 *
+	 * @param string $val css value
+	 *
+	 * @return boolean
+	 */
+	protected function propertyTop($val)
+	{
+		return $this->callPropertyMethod('margin-top', $val);
+	}
+
+	/**
+	 * check css value
+	 *
+	 * @param string $val css value
+	 *
+	 * @return boolean
+	 */
+	protected function propertyBottom($val)
+	{
+		return $this->callPropertyMethod('margin-top', $val);
+	}
+
+	/**
+	 * check css value
+	 *
+	 * @param string $val css value
+	 *
+	 * @return boolean
+	 */
+	protected function propertyLeft($val)
+	{
+		return $this->callPropertyMethod('margin-top', $val);
+	}
+
+	/**
+	 * check css value
+	 *
+	 * @param string $val css value
+	 *
+	 * @return boolean
+	 */
+	protected function propertyRight($val)
+	{
+		return $this->callPropertyMethod('margin-top', $val);
+	}
+
+	/**
+	 * check css value
+	 *
+	 * @param string $val css value
+	 *
+	 * @return boolean
+	 */
+	protected function propertyFloat($val)
+	{
+		$pattern = '(left|right|none|inherit)';
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
+	}
+
+	/**
+	 * check css value
+	 *
+	 * @param string $val css value
+	 *
+	 * @return boolean
+	 */
+	protected function propertyClear($val)
+	{
+		$pattern = '(none|left|right|both|inherit)';
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
+	}
+
+	/**
+	 * check css value
+	 *
+	 * @param string $val css value
+	 *
+	 * @return boolean
+	 */
+	protected function propertyZIndex($val)
+	{
+		$pattern = '(auto|'.$this->integer.'|inherit)';
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
+	}
+
+	/**
+	 * check css value
+	 *
+	 * @param string $val css value
+	 *
+	 * @return boolean
+	 */
+	protected function propertyDirection($val)
+	{
+		$pattern = '(ltr|rtl|inherit)';
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
+	}
+
+	/**
+	 * check css value
+	 *
+	 * @param string $val css value
+	 *
+	 * @return boolean
+	 */
+	protected function propertyUnicodeBidi($val)
+	{
+		$pattern = '(normal|embed|bidi-override|inherit)';
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
+	}
+
+	/**
+	 * check css value
+	 *
+	 * @param string $val css value
+	 *
+	 * @return boolean
+	 */
+	protected function propertyWidth($val)
+	{
+		$pattern = '('.$this->lengthPlus.'|'.$this->percentagePlus.'|auto|inherit)';
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
+	}
+
+	/**
+	 * check css value
+	 *
+	 * @param string $val css value
+	 *
+	 * @return boolean
+	 */
+	protected function propertyMinWidth($val)
+	{
+		$pattern = '('.$this->lengthPlus.'|'.$this->percentagePlus.'|inherit)';
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
+	}
+
+	/**
+	 * check css value
+	 *
+	 * @param string $val css value
+	 *
+	 * @return boolean
+	 */
+	protected function propertyMaxWidth($val)
+	{
+		$pattern = '('.$this->lengthPlus.'|'.$this->percentagePlus.'|none|inherit)';
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
+	}
+
+	/**
+	 * check css value
+	 *
+	 * @param string $val css value
+	 *
+	 * @return boolean
+	 */
+	protected function propertyHeight($val)
+	{
+		return $this->callPropertyMethod('width', $val);
+	}
+
+	/**
+	 * check css value
+	 *
+	 * @param string $val css value
+	 *
+	 * @return boolean
+	 */
+	protected function propertyMinHeight($val)
+	{
+		return $this->callPropertyMethod('min-height', $val);
+	}
+
+	/**
+	 * check css value
+	 *
+	 * @param string $val css value
+	 *
+	 * @return boolean
+	 */
+	protected function propertyMaxHeight($val)
+	{
+		return $this->callPropertyMethod('max-height', $val);
+	}
+
+	/**
+	 * check css value
+	 *
+	 * @param string $val css value
+	 *
+	 * @return boolean
+	 */
+	protected function propertyLineHeight($val)
+	{
+		$pattern = '(normal|'.$this->numberPlus.'|'.$this->lengthPlus.'|'.$this->percentagePlus.'|inherit)';
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
+	}
+
+	protected function propertyVerticalAlign($val)
+	{
+		$pattern = '(baseline|sub|super|top|text-top|middle|bottom|text-bottom|'.$this->percentage.'|'.$this->length.'|inherit)';
 		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
