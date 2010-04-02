@@ -268,7 +268,6 @@ abstract class AValidate implements IValidate
 	 */
 	protected function getPropertyMethod($property)
 	{
-		//if (strpos($property, '--') !== false) return false;
 		$property = strtolower(trim($property));
 		$_property = $property{0} === '-' ? $property : '-'.$property; // for vendor prefixes
 		return isset($this->propertyList[$_property]) ? $this->propertyList[$_property] : false;
@@ -278,7 +277,6 @@ abstract class AValidate implements IValidate
 	 * propertyをチェックするメソッドを呼ぶ。
 	 * メソッドが存在しない/適当でない場合、falseを返す。
 	 * 実行した結果も返す
-	 *
 	 *
 	 * @return boolean
 	 */
@@ -480,8 +478,12 @@ abstract class AValidate implements IValidate
 	{
 		$comment = '(?:\/\*[^*]*\*+([^\/][^*]*\*+)*\/)';
 		$patternArr = array(
-			'((?i:rgb|hsl|rgba|hsla|url))\(('.$comment.'|\\\\\)|[^\)])*\)',
+			// function
+			'((?i:rgb|hsl|rgba|hsla|url|rect|attr|counter|counters))\(('.$comment.'|\\\\\)|[^\)])*\)',
+			// double quote
 			'("('.$comment.'|\\\"|[^"])*")',
+			// single quote
+			'(\'('.$comment.'|\\\\\'|[^\'])*\')',
 		);
 		$pattern = '('.implode('|', $patternArr).')';
 		preg_match_all('/'.$pattern.'/', $val, $matches, PREG_OFFSET_CAPTURE);
@@ -501,10 +503,10 @@ abstract class AValidate implements IValidate
 			if ($before === 0) $res[$count] =  $res[$count] . $matches[$i][0];
 			else $res[] = $matches[$i][0];
 			$str = substr($val, $len, $length);
-			$res = array_merge($res, preg_split('/\s* \s*/', $str, -1, PREG_SPLIT_NO_EMPTY));
+			$res = array_merge($res, preg_split('/\s+/', $str, -1, PREG_SPLIT_NO_EMPTY));
 			$before = $length;
 		}
-		if ($i === 0) $res = preg_split('/\s* \s*/', $val, -1, PREG_SPLIT_NO_EMPTY);
+		if ($i === 0) $res = preg_split('/\s+/', $val, -1, PREG_SPLIT_NO_EMPTY);
 		return $res;
 	}
 
@@ -1236,10 +1238,113 @@ abstract class AValidate implements IValidate
 		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
+	/**
+	 * check css value
+	 *
+	 * @param string $val css value
+	 *
+	 * @return boolean
+	 */
 	protected function propertyVerticalAlign($val)
 	{
 		$pattern = '(baseline|sub|super|top|text-top|middle|bottom|text-bottom|'.$this->percentage.'|'.$this->length.'|inherit)';
 		return preg_match('/^'.$pattern.'$/i', $val) === 1;
+	}
+
+	/**
+	 * check css value
+	 *
+	 * @param string $val css value
+	 *
+	 * @return boolean
+	 */
+	protected function propertyOverflow($val)
+	{
+		$pattern = '(visible|hidden|scroll|auto|inherit)';
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
+	}
+
+	/**
+	 * check css value
+	 *
+	 * @param string $val css value
+	 *
+	 * @return boolean
+	 */
+	protected function propertyClip($val)
+	{
+		$clip = '(auto|'.$this->length.')';
+		$c = '(?:\s*(?:\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/)*\s*)*';
+		$rect = 'rect\('.$c.$clip.$c.','.$c.$clip.$c.','.$c.$clip.$c.','.$c.$clip.$c.'\)';
+		$pattern = '(auto|'.$rect.')';
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
+	}
+
+	/**
+	 * check css value
+	 *
+	 * @param string $val css value
+	 *
+	 * @return boolean
+	 */
+	protected function propertyVisibility($val)
+	{
+		$pattern = '(visible|hidden|collapse|inherit)';
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
+	}
+
+	/**
+	 * check css value
+	 *
+	 * @param string $val css value
+	 *
+	 * @return boolean
+	 */
+	protected function propertyContent($val)
+	{
+		// TODO リファクタ
+		$nl = '(\n|\r\n|\r|\f)';
+		$ascii    = '[¥x00-¥x7f]'; // x00-x7f hexdec   0 - 127 decoct   \0 - \177
+		$nonascii = '[¥x80-¥xff]'; // x80-xff hexdec 128 - 255 decoct \200 - \377
+		$unicode = '(\\[0-9a-fA-F]{1,6}[ \t\r\n\f]?)';
+
+		$escape = '('.$unicode.'|\\\( |-|~|'.$nonascii.'))';
+		$nmstart = '([_a-zA-Z]|'.$nonascii.'|'.$escape.')';
+		$nmchar = '([_a-zA-Z0-9-]|'.$nonascii.'|'.$escape.')';
+		$string1 = '(\"([\t !#$%&(-~]|\\\\'.$nl.'|\'|'.$nonascii.'|'.$escape.')*\")';
+		$string2 = "(\'([\t !#$%&(-~]|\\\\'.$nl.'|\"|'.$nonascii.'|'.$escape.')*\')";
+		$string = '('.$string1.'|'.$string2.')';
+		$ident = '-?'.$nmstart.$nmchar.'*';
+		$_url = '([!#$%&*-~]|'.$nonascii.'|'.$escape.')';
+		$url1 = 'url\(\s*'.$string.'\s*\)';
+		$url2 = 'url\(\s*'.$_url.'\s*\)';
+		$url = '('.$url1.'|'.$url2.')';
+
+		$listStyleType = '(disc|circle|square|decimal|decimal-leading-zero|lower-roman|upper-roman|lower-greek|lower-alpha|lower-latin|upper-alpha|upper-latin|hebrew|armenian|georgian|cjk-ideographic|hiragana|katakana|hiragana-iroha|katakana-iroha|none|inherit)';
+
+		$arr = self::splitSpace($val);
+		// normal | none | [ <string> | <uri> | <counter> | attr(<identifier>) | open-quote | close-quote | no-open-quote | no-close-quote ]+ | inherit
+		$patternMultiArr = array(
+			$string,
+			$url,
+			'attr\('.$ident.'\)',
+
+			// <counter> counter(<identifier>) | counter(<identifier>,<list-style-type>) | counters(<identifier>,<string>) | counters(<identifier>,<string>,<list-style-type>)
+			'counter\('.$ident.'\)',
+			'counter\('.$ident.'\s*,\s*'.$listStyleType.'\s*\)',
+			'counters\('.$ident.'\s*,\s*'.$string.'\s*\)',
+			'counters\('.$ident.'\s*,\s*'.$string.'\s*,\s*'.$listStyleType.'\s*\)',
+			'open-quote',
+			'close-quote',
+			'no-open-quote',
+			'no-close-quote',
+		);
+		$patternOne = '(normal|none|'.implode('|', $patternMultiArr).'|inherit)';
+		if (count($arr) === 1) return preg_match('/^'.$patternOne.'$/i', $arr[0]) === 1;
+		$patternMulti = '('.implode('|', $patternMultiArr).')';
+		foreach ($arr as $v) if(!preg_match('/^'.$patternMulti.'$/i', $v)) return false;
+
+		return true;
 	}
 
 	/**
