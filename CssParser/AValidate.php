@@ -85,18 +85,7 @@ abstract class AValidate implements IValidate
 		/////////////////////////////////////////////////////////////////
 		// propertyのリストを作成する
 		/////////////////////////////////////////////////////////////////
-		$ref = new ReflectionClass(__CLASS__);
-		$methods = $ref->getMethods();
-		$len = strlen($this->propertyMethodPrefix);
-		$propertyList = array();
-		foreach ($methods as $method) {
-			if (strpos($method->name, $this->propertyMethodPrefix) === 0 && strlen($method->name) > $len) {
-				$property = preg_replace('/^'.$this->propertyMethodPrefix.'/', '', $method->name, 1);
-				$property = strtolower(preg_replace('/([A-Z])/', '-$1', $property));
-				$propertyList[$property] = $method->name;
-			}
-		}
-		$this->propertyList = $propertyList;
+		$this->propertyList = $this->_initializePropertyList();
 
 		/////////////////////////////////////////////////////////////////
 		// css 内部定義構築
@@ -141,6 +130,7 @@ abstract class AValidate implements IValidate
 		// セレクタのリストを対応するCSSのレベルに合わせる
 		/////////////////////////////////////////////////////////////////
 		$_selectorParseList = $this->selectorParseListOrigin = $this->_initializeSelector();
+
 		foreach ($this->removeSelectorParseList as $remove) {
 			if (isset($_selectorParseList[$remove])) {
 				unset($_selectorParseList[$remove]);
@@ -149,6 +139,51 @@ abstract class AValidate implements IValidate
 		$this->selectorParseList = $_selectorParseList;
 
 		$this->valDef = $this->_initializeValue();
+	}
+
+	/**
+	 * propertyのリストを作成する
+	 *
+	 * @return Array
+	 */
+	protected function _initializePropertyList()
+	{
+		$propertyList = array();
+		/*$list = array(
+			'text-indent','text-align','text-decoration','letter-spacing','word-spacing','text-transform','white-space',
+			'color','background-color','background-image','background-repeat','background-attachment','background-position','background',
+			'font-family','font-style','font-variant','font-weight','font-size','font',
+			'margin-top','margin-right','margin-bottom','margin-left','margin',
+			'padding-top','padding-right','padding-bottom','padding-left','padding',
+			'border-top-width','border-right-width','border-bottom-width','border-left-width','border-width',
+			'border-top-color','border-right-color','border-bottom-color','border-left-color','border-color',
+			'border-top-style','border-right-style','border-bottom-style','border-left-style','border-style',
+			'border-top','border-right','border-bottom','border-left','border',
+			'display','position','top','bottom','right','left','float','clear','z-index','direction','unicode-bidi',
+			'width','min-width','max-width','height','min-height','max-height','line-height','vertical-align',
+			'overflow','clip','visibility',
+			'caption-side','table-layout','border-collapse','border-spacing','empty-cells',
+			'content','quotes','counter-reset','counter-increment','list-style-type','list-style-image','list-style-position','list-style',
+			'cursor','outline','outline-width','outline-style','outline-color',
+		);
+		foreach ($list as $v) {
+			$property = '-' . $v;
+			$propertyList[$property] = $this->propertyMethodPrefix . str_replace(' ', '', ucwords(str_replace('-', ' ', $property)));
+		}
+		return $propertyList;*/
+
+		$ref = new ReflectionClass(__CLASS__);
+		$methods = $ref->getMethods();
+		$len = strlen($this->propertyMethodPrefix);
+
+		foreach ($methods as $method) {
+			if (strpos($method->name, $this->propertyMethodPrefix) === 0 && strlen($method->name) > $len) {
+				$property = preg_replace('/^'.$this->propertyMethodPrefix.'/', '', $method->name, 1);
+				$property = strtolower(preg_replace('/([A-Z])/', '-$1', $property));
+				$propertyList[$property] = $method->name;
+			}
+		}
+		return $propertyList;
 	}
 
 	/**
@@ -206,27 +241,31 @@ abstract class AValidate implements IValidate
 		$valDef['percentagePlus'] = $percentagePlus = '(?:\+?(?:[0-9]{1,}(\.[0-9]+)?|\.[0-9]+)%)';
 		$valDef['ignore']         = $ignore         = '(?:\s*(?:\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/)*\s*)*';
 
-		$rgb1 = '(?:[0-2][0-5]{2}|[0-1][0-9]{0,2})';
-		$rgb2 = '(?:[0-9]{1,3}|0)%';
-		$colorArr = array(
-			// #000
-			'(?:#[0-9a-fA-F]{3})',
-			// #000000
-			'(?:#[0-9a-zA-Z]{6})',
-			// rgb(255,0,0)
-			'(?:rgb\('.$ignore.$rgb1.$ignore.','.$ignore.$rgb1.$ignore.','.$ignore.$rgb1.$ignore.'\))',
-			// rgb(100%,0%,0%)
-			'(?:rgb\('.$ignore.$rgb2.$ignore.','.$ignore.$rgb2.$ignore.','.$ignore.$rgb2.$ignore.'\))',
-			// 基本カラー 16
-			'(?:Black|Silver|Gray|White|Maroon|Red|Purple|Fuchsia|Green|Lime|Olive|Yellow|Navy|Blue|Teal|Aqua)',
-			// 追加基本カラー css2.1 add
-			'(?:Orange)',
-			// 147
-			'(?:aliceblue|antiquewhite|aqua|aquamarine|azure|beige|bisque|black|blanchedalmond|blue|blueviolet|brass|brown|burlywood|cadetblue|chartreuse|chocolate|coolcopper|copper|coral|cornflower|cornflowerblue|cornsilk|crimson|cyan|darkblue|darkbrown|darkcyan|darkgoldenrod|darkgray|darkgreen|darkkhaki|darkmagenta|darkolivegreen|darkorange|darkorchid|darkred|darksalmon|darkseagreen|darkslateblue|darkslategray|darkturquoise|darkviolet|deeppink|deepskyblue|dimgray|dodgerblue|feldsper|firebrick|floralwhite|forestgreen|fuchsia|gainsboro|ghostwhite|gold|goldenrod|gray|green|greenyellow|honeydew|hotpink|indianred|indigo|ivory|khaki|lavender|lavenderblush|lawngreen|lemonchiffon|lightblue|lightcoral|lightcyan|lightgoldenrodyellow|lightgreen|lightgrey|lightpink|lightsalmon|lightseagreen|lightskyblue|lightslategray|lightsteelblue|lightyellow|lime|limegreen|linen|magenta|maroon|mediumaquamarine|mediumblue|mediumorchid|mediumpurple|mediumseagreen|mediumslateblue|mediumspringgreen|mediumturquoise|mediumvioletred|midnightblue|mintcream|mistyrose|moccasin|navajowhite|navy|oldlace|olive|olivedrab|orange|orangered|orchid|palegoldenrod|palegreen|paleturquoise|palevioletred|papayawhip|peachpuff|peru|pink|plum|powderblue|purple|red|richblue|rosybrown|royalblue|saddlebrown|salmon|sandybrown|seagreen|seashell|sienna|silver|skyblue|slateblue|slategray|snow|springgreen|steelblue|tan|teal|thistle|tomato|turquoise|violet|wheat|white|whitesmoke|yellow|yellowgreen)',
-			// システムカラー
-			'(?:Background|Window|WindowText|WindowFrame|ActiveBorder|InactiveBorder|ActiveCaption|InactiveCaption|CaptionText|InactiveCaptionText|Scrollbar|AppWorkspace|Highlight|HighlightText|GrayText|Menu|MenuText|ButtonFace|ButtonText|ButtonHighlight|ButtonShadow|ThreeDFace|ThreeDHighlight|ThreeDShadow|ThreeDLightShadow|ThreeDDarkShadow|InfoText|InfoBackground)',
-		);
-		$valDef['color'] = $color = '(?:'.implode('|', $colorArr).')';
+		if (isset($this->valDef['color'])) {
+			$valDef['color'] = $color = $this->valDef['color'];
+		} else {
+			$rgb1 = '(?:[0-2][0-5]{2}|[0-1][0-9]{0,2})';
+			$rgb2 = '(?:[0-9]{1,3}|0)%';
+			$colorArr = array(
+				// #000
+				'(?:#[0-9a-fA-F]{3})',
+				// #000000
+				'(?:#[0-9a-zA-Z]{6})',
+				// rgb(255,0,0)
+				'(?:rgb\('.$ignore.$rgb1.$ignore.','.$ignore.$rgb1.$ignore.','.$ignore.$rgb1.$ignore.'\))',
+				// rgb(100%,0%,0%)
+				'(?:rgb\('.$ignore.$rgb2.$ignore.','.$ignore.$rgb2.$ignore.','.$ignore.$rgb2.$ignore.'\))',
+				// 基本カラー 16
+				'(?:Black|Silver|Gray|White|Maroon|Red|Purple|Fuchsia|Green|Lime|Olive|Yellow|Navy|Blue|Teal|Aqua)',
+				// 追加基本カラー css2.1 add
+				'(?:Orange)',
+				// 147
+				'(?:aliceblue|antiquewhite|aqua|aquamarine|azure|beige|bisque|black|blanchedalmond|blue|blueviolet|brass|brown|burlywood|cadetblue|chartreuse|chocolate|coolcopper|copper|coral|cornflower|cornflowerblue|cornsilk|crimson|cyan|darkblue|darkbrown|darkcyan|darkgoldenrod|darkgray|darkgreen|darkkhaki|darkmagenta|darkolivegreen|darkorange|darkorchid|darkred|darksalmon|darkseagreen|darkslateblue|darkslategray|darkturquoise|darkviolet|deeppink|deepskyblue|dimgray|dodgerblue|feldsper|firebrick|floralwhite|forestgreen|fuchsia|gainsboro|ghostwhite|gold|goldenrod|gray|green|greenyellow|honeydew|hotpink|indianred|indigo|ivory|khaki|lavender|lavenderblush|lawngreen|lemonchiffon|lightblue|lightcoral|lightcyan|lightgoldenrodyellow|lightgreen|lightgrey|lightpink|lightsalmon|lightseagreen|lightskyblue|lightslategray|lightsteelblue|lightyellow|lime|limegreen|linen|magenta|maroon|mediumaquamarine|mediumblue|mediumorchid|mediumpurple|mediumseagreen|mediumslateblue|mediumspringgreen|mediumturquoise|mediumvioletred|midnightblue|mintcream|mistyrose|moccasin|navajowhite|navy|oldlace|olive|olivedrab|orange|orangered|orchid|palegoldenrod|palegreen|paleturquoise|palevioletred|papayawhip|peachpuff|peru|pink|plum|powderblue|purple|red|richblue|rosybrown|royalblue|saddlebrown|salmon|sandybrown|seagreen|seashell|sienna|silver|skyblue|slateblue|slategray|snow|springgreen|steelblue|tan|teal|thistle|tomato|turquoise|violet|wheat|white|whitesmoke|yellow|yellowgreen)',
+				// システムカラー
+				'(?:Background|Window|WindowText|WindowFrame|ActiveBorder|InactiveBorder|ActiveCaption|InactiveCaption|CaptionText|InactiveCaptionText|Scrollbar|AppWorkspace|Highlight|HighlightText|GrayText|Menu|MenuText|ButtonFace|ButtonText|ButtonHighlight|ButtonShadow|ThreeDFace|ThreeDHighlight|ThreeDShadow|ThreeDLightShadow|ThreeDDarkShadow|InfoText|InfoBackground)',
+			);
+			$valDef['color'] = $color = '(?:'.implode('|', $colorArr).')';
+		}
 
 		$valDef['generic-family'] = '(?:serif|sans-serif|cursive|fantasy|monospace)';
 		$valDef['family-name']    = '(?:'.$this->def['string'].'|(?:'.$this->def['ident'].'+))';
@@ -391,7 +430,7 @@ abstract class AValidate implements IValidate
 	protected function callPropertyMethod()
 	{
 		$args = func_get_args();
-		if (!isset($args[0], $args[1]) || !is_string($args[0]) || !is_string($args[0])) return false;
+		if (!isset($args[0], $args[1])) return false;
 		$method = $this->getPropertyMethod(array_shift($args));
 		if ($method === false) return false; // メソッドが存在しない/適当でない
 		return call_user_func_array(array($this, $method), $args);
@@ -631,11 +670,6 @@ abstract class AValidate implements IValidate
 
 		return $res;
 	}
-
-
-
-
-
 
 	/**
 	 * margin / padding / border
@@ -916,7 +950,7 @@ abstract class AValidate implements IValidate
 	 */
 	protected function propertyBorderTopStyle($val)
 	{
-		$pattern = '(none|hidden|dotted|dashed|solid|double|groove|ridge|inset|outset|inherit)';
+		$pattern = '('.$this->valDef['border-style'].'|inherit)';
 		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
@@ -1390,7 +1424,7 @@ abstract class AValidate implements IValidate
 	 */
 	protected function propertyClip($val)
 	{
-		$clip = '(auto|'.$this->length.')';
+		$clip = '(auto|'.$this->valDef['length'].')';
 		$c = '(?:\s*(?:\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/)*\s*)*';
 		$rect = 'rect\('.$c.$clip.$c.','.$c.$clip.$c.','.$c.$clip.$c.','.$c.$clip.$c.'\)';
 		$pattern = '(auto|'.$rect.')';
@@ -1475,10 +1509,26 @@ abstract class AValidate implements IValidate
 	 *
 	 * @return boolean
 	 */
-	protected function propertyPageBreakBefore($val)
+	protected function propertyCounterReset($val)
 	{
-		$pattern = '(auto|always|avoid|left|right|inherit)';
-		return preg_match('/^'.$pattern.'$/i', $val) === 1;
+		// [ <identifier> <integer>? ]+ | none | inherit
+		$arr = self::_split($val);
+		$result = array();
+		if (count($arr) === 1) {
+			$patternOne = '('.$this->def['ident'].'|none|inherit)';
+			return preg_match('/^'.$patternOne.'$/i', $arr[0]) === 1;
+		}
+		$ident = $this->def['ident'];
+		$int   = $this->valDef['integer'];
+		while (count($arr) > 0) {
+			if (!preg_match('/^'.$ident.'$/i', $arr[0])) {
+				return false;
+			} else {
+				$result[] = array_shift($arr);
+				if (isset($arr[0]) && preg_match('/^'.$int.'$/i', $arr[0])) $result[] = array_shift($arr);
+			}
+		}
+		return true;
 	}
 
 	/**
@@ -1488,48 +1538,9 @@ abstract class AValidate implements IValidate
 	 *
 	 * @return boolean
 	 */
-	protected function propertyPageBreakAfter($val)
+	protected function propertyCounterIncrement($val)
 	{
-		return $this->callPropertyMethod('page-break-before', $val);
-	}
-
-	/**
-	 * check css value
-	 *
-	 * @param string $val css value
-	 *
-	 * @return boolean
-	 */
-	protected function propertyPageBreakInside($val)
-	{
-		$pattern = '(avoid|auto|inherit)';
-		return preg_match('/^'.$pattern.'$/i', $val) === 1;
-	}
-
-	/**
-	 * check css value
-	 *
-	 * @param string $val css value
-	 *
-	 * @return boolean
-	 */
-	protected function propertyOrphans($val)
-	{
-		$pattern = '('.$this->valDef['integer'].'|inherit)';
-		return preg_match('/^'.$pattern.'$/i', $val) === 1;
-	}
-
-	/**
-	 * check css value
-	 *
-	 * @param string $val css value
-	 *
-	 * @return boolean
-	 */
-	protected function propertyWidows($val)
-	{
-		$pattern = '('.$this->valDef['integer'].'|inherit)';
-		return preg_match('/^'.$pattern.'$/i', $val) === 1;
+		return $this->callPropertyMethod('counter-reset', $val);
 	}
 
 	/**
@@ -1735,11 +1746,13 @@ abstract class AValidate implements IValidate
 	 *
 	 * @return boolean
 	 */
+	/* css2.1 delete
 	protected function propertyFontStretch($val)
 	{
 		$pattern = '(normal|wider|narrower|ultra-condensed|extra-condensed|condensed|semi-condensed|semi-expanded|expanded|extra-expanded|ultra-expanded|inherit)';
 		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
+	*/
 
 	/**
 	 * check css value
@@ -1761,11 +1774,13 @@ abstract class AValidate implements IValidate
 	 *
 	 * @return boolean
 	 */
+	/* css2.1 delete
 	protected function propertyFontSizeAdjust($val)
 	{
 		$pattern = '('.$this->valDef['numberPlus'].'|none|inherit)';
 		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
+	*/
 
 	/**
 	 * check css value
@@ -1799,8 +1814,6 @@ abstract class AValidate implements IValidate
 			}
 		}
 
-		$arr = array_merge($arr, array());
-
 		// <'font-size'> [ / <'line-height'> ]?
 		$fontSize = array(
 			$this->valDef['font-size'],
@@ -1818,6 +1831,14 @@ abstract class AValidate implements IValidate
 		}
 
 		if (isset($arr[0]) === false) return false;
+
+		// 'font-family' のみで構成されているかどうかのチェック
+		if (count($arr) > 1) {
+			$count = count($arr);
+			for ($i=0;$i<$count;$i++) {
+				if (strpos($arr[$i] . $arr[$i < $count - 1 ? $i + 1 : $i - 1], ',') === false) return false;
+			}
+		}
 
 		return $this->callPropertyMethod('font-family', implode('', $arr));
 	}
