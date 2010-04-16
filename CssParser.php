@@ -1,6 +1,5 @@
 <?php
 
-
 require_once 'PEG.php';
 
 require_once dirname(__FILE__) . '/CssParser/Locator.php';
