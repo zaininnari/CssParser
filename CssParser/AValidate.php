@@ -131,9 +131,10 @@ abstract class AValidate implements IValidate
 		$url = '('.$url1.'|'.$url2.')';
 
 		$this->def = array(
-			'ident'  => $ident,
-			'uri'    => $url,
-			'string' => $string,
+			'ident'   => $ident,
+			'uri'     => $url,
+			'string'  => $string,
+			'unicode' => $unicode
 		);
 
 		/////////////////////////////////////////////////////////////////
@@ -415,17 +416,24 @@ abstract class AValidate implements IValidate
 			'isValid' => false,
 		);
 
-		// $unicode = '(\\[0-9a-fA-F]{1,6}[ \t\r\n\f]?)';
-		// XXX
-		$unicode = '(\\\[0-9a-fA-F]{1,6}(?:[ \t\r\n\f]?))';
-		$aaa = preg_match_all('/'.$unicode.'/i', $selector, $maches);
-
 		//余分な空白を取り除く
-		$result['cleanSelector'] = preg_replace(
+		$selector = preg_replace(
 			array('/\s+/', '/\s*>\s*/', '/\s*\+\s*/'),
 			array(' ',     '>',         '+'),
 			$selector
 		);
+
+		// te\st -> test
+		$selector = preg_replace('/\\\([^0-9a-fA-F])/', '$1', $selector);
+
+		// \61 -> a
+		if (preg_match_all('/'.$this->def['unicode'].'/i', $selector, $matches)) {
+			foreach ($matches[0] as $match) {
+				$selector = str_replace($match, chr(hexdec($match)), $selector);
+			}
+		}
+
+		$result['cleanSelector'] = $selector;
 
 		// 単純セレクタ（simple selector）や結合子（combinators）に分割する
 		$result['parsedSelector'] = self::selectorParse($result['cleanSelector']);
