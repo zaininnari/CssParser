@@ -13,35 +13,7 @@ abstract class AValidate implements IValidate
 	 *
 	 * @var array
 	 */
-	protected $selectorParseListOrigin = array(
-		'universal'     => '/^(\*)/',
-		'descendant'   => '/^( )/',
-		'id'           => '/^(#[a-zA-Z][\w\-]*)/',
-		'class'        => '/^(\.[a-zA-Z][\w\-]*)/',
-		'child'        => '/^(>)/',
-		'adjacent'        => '/^(\+)/',
-
-		// Pseudo-classes
-		'link'         => '/^(:(link|visited))/',
-		'dynamic'      => '/^(:(link|visited|hover|active|focus))/',
-		'first-child'  => '/^(:first-child)/',
-
-		// language pseudo-class
-		// ISO_639
-		'language'     => '/^(:lang\([a-z\-]+\))/',
-
-		// Pseudo-elements
-		'first-line'   => '/^(:first-line)/',
-		'first-letter' => '/^(:first-letter)/',
-		'before'       => '/^(:before)/',
-		'after'        => '/^(:after)/',
-
-		// 属性セレクタ（Attribute selectors）
-		'attribute' => '/^(\[[^\]]+\])/',
-
-		// type
-		'type'         => '/^([a-zA-Z][\w\-]*)/',
-	);
+	protected $selectorParseListOrigin = array();
 
 	/**
 	 * $selectorParseList からパースしないセレクタの正規表現を取り除く一次配列
@@ -76,24 +48,11 @@ abstract class AValidate implements IValidate
 
 	/**
 	 * value内部定義
-	 * 一部は、メンテナンスをしやすくするため自動生成
+	 * メンテナンスをしやすくするため自動生成
 	 *
 	 * @var array
 	 */
-	protected $color, $string, $ident, $uri, $familyName, $utf8, $marginWidth, $paddingWidth, $borderWidth;
-
-	protected $integer        = '(?:(?:\+|-|)(?:[0-9]{1,}))';
-	protected $numberPlus     = '(?:\+|)(?:[0-9]{1,}(\.[0-9]+)?|\.[0-9]+)';
-	protected $length         = '(?:(?:\+|-|)(?:(?:[0-9]{1,}(\.[0-9]+)?|\.[0-9]+)(?:px|em|ex|in|cm|mm|pt|pc)|0))';
-	protected $lengthPlus     = '(?:(?:\+|)(?:(?:[0-9]{1,}(\.[0-9]+)?|\.[0-9]+)(?:px|em|ex|in|cm|mm|pt|pc)|0))';
-	protected $percentage     = '(?:(?:\+|-|)(?:[0-9]{1,}(\.[0-9]+)?|\.[0-9]+)%)';
-	protected $percentagePlus = '(?:\+?(?:[0-9]{1,}(\.[0-9]+)?|\.[0-9]+)%)';
-	protected $ignore         = '(?:\s*(?:\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/)*\s*)*';
-	protected $genericFamily  = '(?:serif|sans-serif|cursive|fantasy|monospace)';
-	protected $absoluteSize   = '(?:xx-small|x-small|small|medium|large|x-large|xx-large)';
-	protected $relativeSize   = '(?:larger|smaller)';
-	protected $borderStyle    = '(?:none|hidden|dotted|dashed|solid|double|groove|ridge|inset|outset)';
-
+	protected $def, $valDef;
 	protected $css;
 
 	/**
@@ -124,17 +83,6 @@ abstract class AValidate implements IValidate
 		}
 
 		/////////////////////////////////////////////////////////////////
-		// セレクタのリストを対応するCSSのレベルに合わせる
-		/////////////////////////////////////////////////////////////////
-		$_selectorParseList = $this->selectorParseListOrigin;
-		foreach ($this->removeSelectorParseList as $remove) {
-			if (isset($_selectorParseList[$remove])) {
-				unset($_selectorParseList[$remove]);
-			}
-		}
-		$this->selectorParseList = $_selectorParseList;
-
-		/////////////////////////////////////////////////////////////////
 		// propertyのリストを作成する
 		/////////////////////////////////////////////////////////////////
 		$ref = new ReflectionClass(__CLASS__);
@@ -151,12 +99,14 @@ abstract class AValidate implements IValidate
 		$this->propertyList = $propertyList;
 
 		/////////////////////////////////////////////////////////////////
-		// value 内部定義構築
+		// css 内部定義構築
+		// http://www.w3.org/TR/CSS2/grammar.html#scanner
 		/////////////////////////////////////////////////////////////////
-		$nl = '(\n|\r\n|\r|\f)';
+
+		$nl = '(?:\n|\r\n|\r|\f)';
 		$ascii    = '[\x00-\x7f]'; // x00-x7f hexdec   0 - 127 decoct   \0 - \177
 		$nonascii = '[\x80-\xff]'; // x80-xff hexdec 128 - 255 decoct \200 - \377
-		$unicode = '(\\[0-9a-fA-F]{1,6}[ \t\r\n\f]?)';
+		$unicode = '(?:\\\[0-9a-fA-F]{1,6}[ \t\r\n\f]?)';
 		$utf8Arr = array(
 			'(?:[\xc2-\xd4][\x80-\xbf])',
 			'(?:\xef[\xa4-\xab][\x80-\xbf])',
@@ -167,15 +117,12 @@ abstract class AValidate implements IValidate
 			//'(?:[\x09\x0a\x0d\x20-\x7e])',
 		);
 		$utf8 = '(?:'.implode('|', $utf8Arr).')';
-		$escape = '('.$unicode.'|\\\( |-|~|'.$nonascii.'))';
-		$nmstart = '([_a-zA-Z]|'.$nonascii.'|'.$escape.'|'.$utf8.')';
-		$nmchar = '([_a-zA-Z0-9-]|'.$nonascii.'|'.$escape.'|'.$utf8.')';
+		$escape = '(?:'.$unicode.'|\\\( |-|~|'.$nonascii.'))';
+		$nmstart = '(?:[_a-zA-Z]|'.$nonascii.'|'.$escape.'|'.$utf8.')';
+		$nmchar = '(?:[_a-zA-Z0-9-]|'.$nonascii.'|'.$escape.'|'.$utf8.')';
 		$string1 = '(\"([\t !#$%&(-~]|\\\\'.$nl.'|\\\'|'.$nonascii.'|'.$escape.'|'.$utf8.')*\")';
 		$string2 = '(\\\'([\t !#$%&(-~]|\\\\'.$nl.'|"|'.$nonascii.'|'.$escape.'|'.$utf8.')*\\\')';
 		$string = '('.$string1.'|'.$string2.')';
-
-		$this->utf8 = '([\t !#$%&(-~]|\\\\'.$nl.'|'.$nonascii.'|'.$escape.'|'.$utf8.')';
-		$this->string = $string;
 
 		$ident = '-?'.$nmstart.$nmchar.'*';
 		$_url = '([!#$%&*-~]|'.$nonascii.'|'.$escape.')+';
@@ -183,10 +130,81 @@ abstract class AValidate implements IValidate
 		$url2 = 'url\(\s*'.$_url.'\s*\)';
 		$url = '('.$url1.'|'.$url2.')';
 
-		$this->uri = $url;
-		$this->ident = $ident;
+		$this->def = array(
+			'ident'  => $ident,
+			'uri'    => $url,
+			'string' => $string,
+		);
 
-		$c = $this->ignore;
+		/////////////////////////////////////////////////////////////////
+		// セレクタのリストを対応するCSSのレベルに合わせる
+		/////////////////////////////////////////////////////////////////
+		$_selectorParseList = $this->selectorParseListOrigin = $this->_initializeSelector();
+		foreach ($this->removeSelectorParseList as $remove) {
+			if (isset($_selectorParseList[$remove])) {
+				unset($_selectorParseList[$remove]);
+			}
+		}
+		$this->selectorParseList = $_selectorParseList;
+
+		$this->valDef = $this->_initializeValue();
+	}
+
+	/**
+	 * 初期化
+	 *
+	 * @return ?
+	 */
+	protected function _initializeSelector()
+	{
+		return array(
+			'universal'    => '(\*)',
+			'descendant'   => '( )',
+			'id'           => '(#'.$this->def['ident'].')',
+			'class'        => '(\.'.$this->def['ident'].')',
+			'child'        => '(>)',
+			'adjacent'     => '(\+)',
+
+			// Pseudo-classes
+			'link'         => '(:(link|visited))',
+			'dynamic'      => '(:(link|visited|hover|active|focus))',
+			'first-child'  => '(:first-child)',
+
+			// language pseudo-class
+			// ISO_639
+			'language'     => '(:lang\([a-z\-]+\))',
+
+			// Pseudo-elements
+			'first-line'   => '(:first-line)',
+			'first-letter' => '(:first-letter)',
+			'before'       => '(:before)',
+			'after'        => '(:after)',
+
+			// 属性セレクタ（Attribute selectors）
+			// '[' S* IDENT S* [ [ '=' | INCLUDES | DASHMATCH ] S* [ IDENT | STRING ] S* ]? ']'
+			'attribute'    => '(\[\s*'.$this->def['ident'].'\s*(?:(?:=|~=|\|=)\s*(?:'.$this->def['ident'].'|'.$this->def['string'].')\s*)?\])',
+
+			// type
+			'type'         => '('.$this->def['ident'].')',
+		);
+	}
+
+	/**
+	 * 初期化
+	 *
+	 * @return ?
+	 */
+	protected function _initializeValue()
+	{
+		$valDef = array();
+		$valDef['integer']        = $integer        = '(?:(?:\+|-|)(?:[0-9]{1,}))';
+		$valDef['numberPlus']     = $numberPlus     = '(?:\+|)(?:[0-9]{1,}(\.[0-9]+)?|\.[0-9]+)';
+		$valDef['length']         = $length         = '(?:(?:\+|-|)(?:(?:[0-9]{1,}(\.[0-9]+)?|\.[0-9]+)(?:px|em|ex|in|cm|mm|pt|pc)|0))';
+		$valDef['lengthPlus']     = $lengthPlus     = '(?:(?:\+|)(?:(?:[0-9]{1,}(\.[0-9]+)?|\.[0-9]+)(?:px|em|ex|in|cm|mm|pt|pc)|0))';
+		$valDef['percentage']     = $percentage     = '(?:(?:\+|-|)(?:[0-9]{1,}(\.[0-9]+)?|\.[0-9]+)%)';
+		$valDef['percentagePlus'] = $percentagePlus = '(?:\+?(?:[0-9]{1,}(\.[0-9]+)?|\.[0-9]+)%)';
+		$valDef['ignore']         = $ignore         = '(?:\s*(?:\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/)*\s*)*';
+
 		$rgb1 = '(?:[0-2][0-5]{2}|[0-1][0-9]{0,2})';
 		$rgb2 = '(?:[0-9]{1,3}|0)%';
 		$colorArr = array(
@@ -195,9 +213,9 @@ abstract class AValidate implements IValidate
 			// #000000
 			'(?:#[0-9a-zA-Z]{6})',
 			// rgb(255,0,0)
-			'(?:rgb\('.$c.$rgb1.$c.','.$c.$rgb1.$c.','.$c.$rgb1.$c.'\))',
+			'(?:rgb\('.$ignore.$rgb1.$ignore.','.$ignore.$rgb1.$ignore.','.$ignore.$rgb1.$ignore.'\))',
 			// rgb(100%,0%,0%)
-			'(?:rgb\('.$c.$rgb2.$c.','.$c.$rgb2.$c.','.$c.$rgb2.$c.'\))',
+			'(?:rgb\('.$ignore.$rgb2.$ignore.','.$ignore.$rgb2.$ignore.','.$ignore.$rgb2.$ignore.'\))',
 			// 基本カラー 16
 			'(?:Black|Silver|Gray|White|Maroon|Red|Purple|Fuchsia|Green|Lime|Olive|Yellow|Navy|Blue|Teal|Aqua)',
 			// 追加基本カラー css2.1 add
@@ -207,13 +225,30 @@ abstract class AValidate implements IValidate
 			// システムカラー
 			'(?:Background|Window|WindowText|WindowFrame|ActiveBorder|InactiveBorder|ActiveCaption|InactiveCaption|CaptionText|InactiveCaptionText|Scrollbar|AppWorkspace|Highlight|HighlightText|GrayText|Menu|MenuText|ButtonFace|ButtonText|ButtonHighlight|ButtonShadow|ThreeDFace|ThreeDHighlight|ThreeDShadow|ThreeDLightShadow|ThreeDDarkShadow|InfoText|InfoBackground)',
 		);
-		$this->color = '(?:'.implode('|', $colorArr).')';
+		$valDef['color'] = $color = '(?:'.implode('|', $colorArr).')';
 
-		$this->familyName = '(?:'.$this->string.'|(?:'.$this->utf8.'+))';
+		$valDef['generic-family'] = '(?:serif|sans-serif|cursive|fantasy|monospace)';
+		$valDef['family-name']    = '(?:'.$this->def['string'].'|(?:'.$this->def['ident'].'+))';
+		$valDef['absolute-size']  = '(?:xx-small|x-small|small|medium|large|x-large|xx-large)';
+		$valDef['relative-size']  = '(?:larger|smaller)';
+		$valDef['font-size']      = '(?:'.$valDef['absolute-size'].'|'.$valDef['relative-size'].'|'.$valDef['lengthPlus'].'|'.$valDef['percentagePlus'].')';
 
-		$this->marginWidth = '(?:' . $this->length . '|' . $this->percentage . '|auto)';
-		$this->paddingWidth = '(?:' . $this->lengthPlus . '|' . $this->percentagePlus . ')';
-		$this->borderWidth = '(?:thin|medium|thick|' . $this->lengthPlus . '|' . $this->percentagePlus . ')';
+		$valDef['line-height']    = '(?:normal|'.$numberPlus.'|'. $lengthPlus .'|'. $percentagePlus .')';
+
+		$valDef['margin-width']   = '(?:' . $length . '|' . $percentage . '|auto)';
+		$valDef['padding-width']  = '(?:' . $lengthPlus . '|' . $percentagePlus . ')';
+
+		$valDef['border-width']   = $valDef['outline-width'] = '(?:thin|medium|thick|' . $lengthPlus . '|' . $percentagePlus . ')';
+		$valDef['border-style']   = $valDef['outline-style'] = '(?:none|hidden|dotted|dashed|solid|double|groove|ridge|inset|outset)';
+		$valDef['border-color']   = '(?:transparent|'.$color.')';
+		$valDef['outline-color']  = '(?:invert|'.$color.')';
+
+		// css2 -> css2.1 : delete  "hebrew", "cjk-ideographic", "hiragana", "katakana", "hiragana-iroha", "katakana-iroha"
+		$valDef['list-style-type']     = '(?:disc|circle|square|decimal|decimal-leading-zero|lower-roman|upper-roman|lower-greek|lower-latin|upper-latin|armenian|georgian|lower-alpha|upper-alpha|none)';
+		$valDef['list-style-image']    = '(?:'.$this->def['uri'].'|none)';
+		$valDef['list-style-position'] = '(?:inside|outside)';
+
+		return $valDef;
 	}
 
 	/**
@@ -380,6 +415,11 @@ abstract class AValidate implements IValidate
 			'isValid' => false,
 		);
 
+		// $unicode = '(\\[0-9a-fA-F]{1,6}[ \t\r\n\f]?)';
+		// XXX
+		$unicode = '(\\\[0-9a-fA-F]{1,6}(?:[ \t\r\n\f]?))';
+		$aaa = preg_match_all('/'.$unicode.'/i', $selector, $maches);
+
 		//余分な空白を取り除く
 		$result['cleanSelector'] = preg_replace(
 			array('/\s+/', '/\s*>\s*/', '/\s*\+\s*/'),
@@ -418,7 +458,7 @@ abstract class AValidate implements IValidate
 		$before = 0;
 		while (mb_strlen($selector) !== 0) {
 			foreach ($this->selectorParseList as $type => $pattern) {
-				if ($pattern !== null && preg_match($pattern, $selector, $matches)) {
+				if ($pattern !== null && preg_match('/^'.$pattern.'/', $selector, $matches)) {
 					$res[] = array($type, $matches[1]);
 					$selector = mb_substr($selector, mb_strlen($matches[1]));
 					$seek += mb_strlen($matches[1]);
@@ -616,7 +656,7 @@ abstract class AValidate implements IValidate
 	 */
 	protected function propertyMarginTop($val)
 	{
-		$pattern = '('. $this->marginWidth .'|inherit)';
+		$pattern = '('. $this->valDef['margin-width'] .'|inherit)';
 		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
@@ -665,8 +705,8 @@ abstract class AValidate implements IValidate
 	 */
 	protected function propertyMargin($val)
 	{
-		$patternOne   = '(inherit|'.$this->marginWidth.')';
-		$patternMulti = '('.$this->marginWidth.')';
+		$patternOne   = '(inherit|'.$this->valDef['margin-width'].')';
+		$patternMulti = '('.$this->valDef['margin-width'].')';
 		return self::_propertyMarginOrPaddingOrBorder($val, $patternOne, $patternMulti);
 	}
 
@@ -679,7 +719,7 @@ abstract class AValidate implements IValidate
 	 */
 	protected function propertyPaddingTop($val)
 	{
-		$pattern = '('.$this->paddingWidth.'|inherit)';
+		$pattern = '('.$this->valDef['padding-width'].'|inherit)';
 		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
@@ -728,8 +768,8 @@ abstract class AValidate implements IValidate
 	 */
 	protected function propertyPadding($val)
 	{
-		$patternOne   = '(inherit|'.$this->paddingWidth.')';
-		$patternMulti = '('.$this->paddingWidth.')';
+		$patternOne   = '(inherit|'.$this->valDef['padding-width'].')';
+		$patternMulti = '('.$this->valDef['padding-width'].')';
 		return self::_propertyMarginOrPaddingOrBorder($val, $patternOne, $patternMulti);
 	}
 
@@ -742,7 +782,7 @@ abstract class AValidate implements IValidate
 	 */
 	protected function propertyBorderTopWidth($val)
 	{
-		$pattern = '('.$this->borderWidth.'|inherit)';
+		$pattern = '('.$this->valDef['border-width'].'|inherit)';
 		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
@@ -785,16 +825,15 @@ abstract class AValidate implements IValidate
 	/**
 	 * check css value
 	 *
-	 * @param string  $val    css value
-	 * @param boolean $return trueの場合、パターンを返す。
+	 * @param string $val css value
 	 *
-	 * @return boolean / string
+	 * @return boolean
 	 */
-	protected function propertyBorderWidth($val, $return = false)
+	protected function propertyBorderWidth($val)
 	{
-		$patternOne   = '(inherit|'.$this->borderWidth.')';
-		$patternMulti = '('.$this->borderWidth.')';
-		return $return === false ? self::_propertyMarginOrPaddingOrBorder($val, $patternOne, $patternMulti) : $patternMulti;
+		$patternOne   = '(inherit|'.$this->valDef['border-width'].')';
+		$patternMulti = $this->valDef['border-width'];
+		return self::_propertyMarginOrPaddingOrBorder($val, $patternOne, $patternMulti);
 	}
 
 	/**
@@ -806,7 +845,7 @@ abstract class AValidate implements IValidate
 	 */
 	protected function propertyBorderTopColor($val)
 	{
-		$pattern = '(transparent|inherit|'.$this->color.')';
+		$pattern = '(inherit|'.$this->valDef['border-color'].')';
 		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
@@ -849,16 +888,15 @@ abstract class AValidate implements IValidate
 	/**
 	 * check css value
 	 *
-	 * @param string  $val    css value
-	 * @param boolean $return trueの場合、パターンを返す。
+	 * @param string $val css value
 	 *
-	 * @return boolean / string
+	 * @return boolean
 	 */
-	protected function propertyBorderColor($val, $return = false)
+	protected function propertyBorderColor($val)
 	{
-		$patternOne   = '(inherit|transparent|'.$this->color.')';
-		$patternMulti = '(transparent|'.$this->color.')';
-		return $return === false ? self::_propertyMarginOrPaddingOrBorder($val, $patternOne, $patternMulti) : $patternMulti;
+		$patternOne   = '(inherit|'.$this->valDef['border-color'].')';
+		$patternMulti = $this->valDef['border-color'];
+		return self::_propertyMarginOrPaddingOrBorder($val, $patternOne, $patternMulti);
 	}
 
 	/**
@@ -913,16 +951,15 @@ abstract class AValidate implements IValidate
 	/**
 	 * check css value
 	 *
-	 * @param string  $val    css value
-	 * @param boolean $return trueの場合、パターンを返す。
+	 * @param string $val css value
 	 *
-	 * @return boolean / string
+	 * @return boolean
 	 */
-	protected function propertyBorderStyle($val, $return = false)
+	protected function propertyBorderStyle($val)
 	{
-		$patternOne   = '(none|hidden|dotted|dashed|solid|double|groove|ridge|inset|outset|inherit)';
-		$patternMulti = '(none|hidden|dotted|dashed|solid|double|groove|ridge|inset|outset)';
-		return $return === false ? self::_propertyMarginOrPaddingOrBorder($val, $patternOne, $patternMulti) : $patternMulti;
+		$patternOne   = '('.$this->valDef['border-style'].'|inherit)';
+		$patternMulti = $this->valDef['border-style'];
+		return self::_propertyMarginOrPaddingOrBorder($val, $patternOne, $patternMulti);
 	}
 
 	/**
@@ -936,18 +973,18 @@ abstract class AValidate implements IValidate
 	{
 		$patternArr = array(
 			// <border-top-color> = <color> | transparent
-			$this->callPropertyMethod('border-color', $val, true),
+			$this->valDef['border-color'],
 			// <border-style> = none|hidden|dotted|dashed|solid|double|groove|ridge|inset|outset
-			$this->callPropertyMethod('border-style', $val, true),
+			$this->valDef['border-style'],
 			// <border-width> = thin | medium | thick | <lengthPlus>
-			$this->callPropertyMethod('border-width', $val, true),
+			$this->valDef['border-width']
 		);
 		$arr = self::_split($val);
 
 		if (count($arr) > 4) return false;
 		if (count($arr) === 1) {
 			if ($arr[0] === 'inherit') return true;
-			foreach ($patternArr as $v) if (!preg_match('/^'.$v.'$/i', $arr[0])) return true;
+			foreach ($patternArr as $v) if (preg_match('/^'.$v.'$/i', $arr[0])) return true;
 			return false;
 		}
 
@@ -1023,6 +1060,76 @@ abstract class AValidate implements IValidate
 	{
 		$pattern = '(inline|block|list-item|run-in|compact|marker|table|inline-table|table-row-group|table-header-group|table-footer-group|table-row|table-column-group|table-column|table-cell|table-caption|none|inherit)';
 		return preg_match('/^'.$pattern.'$/i', $val) === 1;
+	}
+
+	/**
+	 * check css value
+	 *
+	 * @param string $val css value
+	 *
+	 * @return boolean
+	 */
+	protected function propertyListStyleType($val)
+	{
+		$pattern = '('.$this->valDef['list-style-type'].'|inherit)';
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
+	}
+
+	/**
+	 * check css value
+	 *
+	 * @param string $val css value
+	 *
+	 * @return boolean
+	 */
+	protected function propertyListStyleImage($val)
+	{
+		$pattern = '('.$this->valDef['list-style-image'].'|inherit)';
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
+	}
+
+	/**
+	 * check css value
+	 *
+	 * @param string $val css value
+	 *
+	 * @return boolean
+	 */
+	protected function propertyListStylePosition($val)
+	{
+		$pattern = '('.$this->valDef['list-style-position'].'|inherit)';
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
+	}
+
+	/**
+	 * check css value
+	 *
+	 * @param string $val css value
+	 *
+	 * @return boolean
+	 */
+	protected function propertyListStyle($val)
+	{
+		$arr = self::_split($val);
+		$patternArr = array('list-style-type', 'list-style-image', 'list-style-position');
+		if (count($arr) > 3) return false;
+		if (count($arr) === 1) {
+			if ($arr[0] === 'inherit') return true;
+			foreach ($patternArr as $pattern) if ($this->callPropertyMethod($pattern, $arr[0])) return true;
+			return false;
+		}
+
+		foreach ($arr as $value) {
+			$before = count($patternArr);
+			foreach ($patternArr as $n => $pattern) {
+				if ($this->callPropertyMethod($pattern, $value)) {
+					unset($patternArr[$n]);
+					break;
+				}
+			}
+			if (count($patternArr) === $before) return false;
+		}
+		return true;
 	}
 
 	/**
@@ -1121,7 +1228,7 @@ abstract class AValidate implements IValidate
 	 */
 	protected function propertyZIndex($val)
 	{
-		$pattern = '(auto|'.$this->integer.'|inherit)';
+		$pattern = '(auto|'.$this->valDef['integer'].'|inherit)';
 		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
@@ -1160,7 +1267,7 @@ abstract class AValidate implements IValidate
 	 */
 	protected function propertyWidth($val)
 	{
-		$pattern = '('.$this->lengthPlus.'|'.$this->percentagePlus.'|auto|inherit)';
+		$pattern = '('.$this->valDef['lengthPlus'].'|'.$this->valDef['percentagePlus'].'|auto|inherit)';
 		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
@@ -1173,7 +1280,7 @@ abstract class AValidate implements IValidate
 	 */
 	protected function propertyMinWidth($val)
 	{
-		$pattern = '('.$this->lengthPlus.'|'.$this->percentagePlus.'|inherit)';
+		$pattern = '('.$this->valDef['lengthPlus'].'|'.$this->valDef['percentagePlus'].'|inherit)';
 		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
@@ -1186,7 +1293,7 @@ abstract class AValidate implements IValidate
 	 */
 	protected function propertyMaxWidth($val)
 	{
-		$pattern = '('.$this->lengthPlus.'|'.$this->percentagePlus.'|none|inherit)';
+		$pattern = '('.$this->valDef['lengthPlus'].'|'.$this->valDef['percentagePlus'].'|none|inherit)';
 		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
@@ -1229,16 +1336,15 @@ abstract class AValidate implements IValidate
 	/**
 	 * check css value
 	 *
-	 * @param string  $val    css value
-	 * @param boolean $return trueの場合、パターンを返す。
+	 * @param string $val css value
 	 *
 	 * @return boolean
 	 */
-	protected function propertyLineHeight($val, $return = false)
+	protected function propertyLineHeight($val)
 	{
 		// normal | <number> | <length> | <percentage> | inherit
-		$pattern = '(normal|'.$this->numberPlus.'|'. $this->lengthPlus .'|'. $this->percentagePlus .'|inherit)';
-		return $return === false ? preg_match('/^'.$pattern.'$/i', $val) === 1 : $pattern;
+		$pattern = '('.$this->valDef['line-height'].'|inherit)';
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
 	/**
@@ -1250,7 +1356,7 @@ abstract class AValidate implements IValidate
 	 */
 	protected function propertyVerticalAlign($val)
 	{
-		$pattern = '(baseline|sub|super|top|text-top|middle|bottom|text-bottom|'.$this->percentage.'|'.$this->length.'|inherit)';
+		$pattern = '(baseline|sub|super|top|text-top|middle|bottom|text-bottom|'.$this->valDef['percentage'].'|'.$this->valDef['length'].'|inherit)';
 		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
@@ -1305,18 +1411,16 @@ abstract class AValidate implements IValidate
 	 */
 	protected function propertyContent($val)
 	{
-		$url = $this->uri;
-		$ident = $this->ident;
-		$string = $this->string;
-		$ig = $this->ignore;
-
-		$listStyleType = '(disc|circle|square|decimal|decimal-leading-zero|lower-roman|upper-roman|lower-greek|lower-alpha|lower-latin|upper-alpha|upper-latin|hebrew|armenian|georgian|cjk-ideographic|hiragana|katakana|hiragana-iroha|katakana-iroha|none|inherit)';
+		$ident         = $this->def['ident'];
+		$string        = $this->def['string'];
+		$ig            = $this->valDef['ignore'];
+		$listStyleType = $this->valDef['list-style-type'];
 
 		$arr = self::_split($val);
 		// normal | none | [ <string> | <uri> | <counter> | attr(<identifier>) | open-quote | close-quote | no-open-quote | no-close-quote ]+ | inherit
 		$patternMultiArr = array(
 			$string,
-			$url,
+			$this->def['uri'],
 			'attr\('.$ig.$ident.$ig.'\)',
 
 			// <counter> counter(<identifier>) | counter(<identifier>,<list-style-type>) | counters(<identifier>,<string>) | counters(<identifier>,<string>,<list-style-type>)
@@ -1351,7 +1455,7 @@ abstract class AValidate implements IValidate
 		$patternOne = '(none|inherit)';
 		if (count($arr) === 1) return preg_match('/^'.$patternOne.'$/i', $arr[0]) === 1;
 		if (count($arr) % 2 === 1) return false;
-		$patternMulti = '('.$this->string.')';
+		$patternMulti = '('.$this->def['string'].')';
 		foreach ($arr as $v) if(!preg_match('/^'.$patternMulti.'$/i', $v)) return false;
 		return true;
 	}
@@ -1403,7 +1507,7 @@ abstract class AValidate implements IValidate
 	 */
 	protected function propertyOrphans($val)
 	{
-		$pattern = '('.$this->integer.'|inherit)';
+		$pattern = '('.$this->valDef['integer'].'|inherit)';
 		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
@@ -1416,7 +1520,7 @@ abstract class AValidate implements IValidate
 	 */
 	protected function propertyWidows($val)
 	{
-		$pattern = '('.$this->integer.'|inherit)';
+		$pattern = '('.$this->valDef['integer'].'|inherit)';
 		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
@@ -1429,7 +1533,7 @@ abstract class AValidate implements IValidate
 	 */
 	protected function propertyColor($val)
 	{
-		$pattern = '('.$this->color.'|inherit)';
+		$pattern = '('.$this->valDef['color'].'|inherit)';
 		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
@@ -1443,7 +1547,7 @@ abstract class AValidate implements IValidate
 	protected function propertyBackgroundColor($val)
 	{
 		// <color> | transparent | inherit
-		$pattern = '('.$this->color.'|transparent|inherit)';
+		$pattern = '('.$this->valDef['color'].'|transparent|inherit)';
 		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
@@ -1457,7 +1561,7 @@ abstract class AValidate implements IValidate
 	protected function propertyBackgroundImage($val)
 	{
 		// <uri> | none | inherit
-		$pattern = '('.$this->uri.'|none|inherit)';
+		$pattern = '('.$this->def['uri'].'|none|inherit)';
 		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
@@ -1502,14 +1606,14 @@ abstract class AValidate implements IValidate
 		// [[<percentage> | <length>]{1,2} | [top | center | bottom] || [left | center | right]] | inherit
 		if (count($arr) > 2) return false;
 		if (count($arr) === 1) {
-			$patternOne = '('.$this->percentage.'|'.$this->length.'|top|center|bottom|left|right|inherit)';
+			$patternOne = '('.$this->valDef['percentage'].'|'.$this->valDef['length'].'|top|center|bottom|left|right|inherit)';
 			return preg_match('/^'.$patternOne.'$/i', $arr[0]) === 1;
 		}
 
 		// [top|bottom] が [left|right] に先行する場合のみ、先に検証する
 		if (preg_match('/^(top|bottom)$/i', $arr[0]) && preg_match('/^(left|center|right)$/i', $arr[1])) return true;
-		$patternMulti1 = '('.$this->percentage.'|'.$this->length.'|left|center|right)';
-		$patternMulti2 = '('.$this->percentage.'|'.$this->length.'|top|center|bottom)';
+		$patternMulti1 = '('.$this->valDef['percentage'].'|'.$this->valDef['length'].'|left|center|right)';
+		$patternMulti2 = '('.$this->valDef['percentage'].'|'.$this->valDef['length'].'|top|center|bottom)';
 		if (!preg_match('/^'.$patternMulti1.'$/i', $arr[0]) || !preg_match('/^'.$patternMulti2.'$/i', $arr[1])) return false;
 
 		return true;
@@ -1569,10 +1673,10 @@ abstract class AValidate implements IValidate
 		) return false;
 		$arr = self::_split($val, '\s*,\s*');
 		if (count($arr) === 1) {
-			$patternOne = '('.$this->genericFamily.'|'.$this->familyName.'|inherit)';
+			$patternOne = '('.$this->valDef['generic-family'].'|'.$this->valDef['family-name'].'|inherit)';
 			return preg_match('/^'.$patternOne.'$/i', $arr[0]) === 1;
 		}
-		$patternMulti = '('.$this->genericFamily.'|'.$this->familyName.')';
+		$patternMulti = '('.$this->valDef['generic-family'].'|'.$this->valDef['family-name'].')';
 		foreach ($arr as $v) if(!preg_match('/^'.$patternMulti.'$/i', $v)) return false;
 		return true;
 	}
@@ -1632,15 +1736,14 @@ abstract class AValidate implements IValidate
 	/**
 	 * check css value
 	 *
-	 * @param string  $val    css value
-	 * @param boolean $return trueの場合、パターンを返す。
+	 * @param string $val css value
 	 *
 	 * @return boolean
 	 */
-	protected function propertyFontSize($val, $return = false)
+	protected function propertyFontSize($val)
 	{
-		$pattern = '('.$this->absoluteSize.'|'.$this->relativeSize.'|'.$this->lengthPlus.'|'.$this->percentagePlus.'|inherit)';
-		return $return === false ? preg_match('/^'.$pattern.'$/i', $val) === 1 : $pattern;
+		$pattern = '('.$this->valDef['font-size'].'|inherit)';
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
 	/**
@@ -1652,7 +1755,7 @@ abstract class AValidate implements IValidate
 	 */
 	protected function propertyFontSizeAdjust($val)
 	{
-		$pattern = '('.$this->numberPlus.'|none|inherit)';
+		$pattern = '('.$this->valDef['numberPlus'].'|none|inherit)';
 		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
@@ -1692,15 +1795,14 @@ abstract class AValidate implements IValidate
 
 		// <'font-size'> [ / <'line-height'> ]?
 		$fontSize = array(
-			$this->callPropertyMethod('font-size', $val, true),
-			'('.$this->callPropertyMethod('font-size', $val, true).'\\/'.$this->callPropertyMethod('line-height', $val, true).')'
+			$this->valDef['font-size'],
+			'('.$this->valDef['font-size'].'\\/'.$this->valDef['line-height'].')'
 		);
 
 		if (isset($arr[0]) === false) return false;
 		if (preg_match('/^'.$fontSize[0].'$/i', $arr[0])) {
 			$result[] = array_shift($arr);
-			if (isset($arr[0]) && preg_match('/^(\\/'.$this->callPropertyMethod('line-height', $val, true).')$/i', $arr[0])) $result[] = array_shift($arr);
-			elseif (isset($arr[0]) && $this->callPropertyMethod('line-height', $arr[0])) return false; // font-familyの<string>対策
+			if (isset($arr[0]) && preg_match('/^(\\/'.$this->valDef['line-height'].')$/i', $arr[0])) $result[] = array_shift($arr);
 		} elseif (preg_match('/^'.$fontSize[1].'$/i', $arr[0])) {
 			$result = array_merge($result, explode('/', array_shift($arr)));
 		} else {
@@ -1721,7 +1823,7 @@ abstract class AValidate implements IValidate
 	 */
 	protected function propertyTextIndent($val)
 	{
-		$pattern = '('.$this->length.'|'. $this->percentage .'|inherit)';
+		$pattern = '('.$this->valDef['length'].'|'. $this->valDef['percentage'] .'|inherit)';
 		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
@@ -1780,7 +1882,7 @@ abstract class AValidate implements IValidate
 	 */
 	protected function propertyLetterSpacing($val)
 	{
-		$pattern = '(normal|inherit|'.$this->length.')';
+		$pattern = '(normal|inherit|'.$this->valDef['length'].')';
 		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
 
@@ -1872,11 +1974,11 @@ abstract class AValidate implements IValidate
 	{
 		$arr = self::_split($val);
 		if (count($arr) === 1) {
-			$patternOne = '('.$this->lengthPlus.'|inherit)';
+			$patternOne = '('.$this->valDef['lengthPlus'].'|inherit)';
 			return preg_match('/^'.$patternOne.'$/i', $arr[0]) === 1;
 		}
 
-		foreach ($arr as $v) if (!preg_match('/^'.$this->lengthPlus.'$/i', $v)) return false;
+		foreach ($arr as $v) if (!preg_match('/^'.$this->valDef['lengthPlus'].'$/i', $v)) return false;
 
 		return true;
 	}
@@ -1913,7 +2015,7 @@ abstract class AValidate implements IValidate
 		$arr = self::_split($val, '\s*,\s*');
 		if (count($arr) < 2) return false;
 		$last = array_pop($arr);
-		foreach ($arr as $v) if (!preg_match('/^'.$this->uri.'$/i', $v)) return false;
+		foreach ($arr as $v) if (!preg_match('/^'.$this->def['uri'].'$/i', $v)) return false;
 		$patternMulti = '(auto|crosshair|default|pointer|move|e-resize|ne-resize|nw-resize|n-resize|se-resize|sw-resize|s-resize|w-resize|text|wait|help|progress)';
 		return preg_match('/^'.$patternMulti.'$/i', $last) === 1;
 	}
@@ -1930,9 +2032,9 @@ abstract class AValidate implements IValidate
 		// [ <'outline-color'> || <'outline-style'> || <'outline-width'> ] | inherit
 		$arr = self::_split($val);
 		$patternArr = array(
-			$this->callPropertyMethod('outline-color', $val, true),
-			$this->borderStyle,
-			$this->borderWidth
+			$this->valDef['outline-color'],
+			$this->valDef['outline-style'],
+			$this->valDef['outline-width']
 		);
 
 
@@ -1983,25 +2085,15 @@ abstract class AValidate implements IValidate
 	/**
 	 * check css value
 	 *
-	 * @param string  $val    css value
-	 * @param boolean $return trueの場合、パターンを返す。
+	 * @param string $val css value
 	 *
 	 * @return boolean
 	 */
-	protected function propertyOutlineColor($val, $return = false)
+	protected function propertyOutlineColor($val)
 	{
 		// <color> | invert | inherit
-		$outlineColor = '(?:'.$this->color.'|invert)';
-		$pattern = '('.$outlineColor.'|inherit)';
-		return $return === false ? preg_match('/^'.$pattern.'$/i', $val) === 1 : $outlineColor;
+		$pattern = '('.$this->valDef['outline-color'].'|inherit)';
+		return preg_match('/^'.$pattern.'$/i', $val) === 1;
 	}
-
-
-
-
-
-
-
-
 
 }

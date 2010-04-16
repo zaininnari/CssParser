@@ -34,7 +34,7 @@ class CssParser_RuleSet implements PEG_IParser
 		$rightCommentTrim = create_function('$s', 'return preg_replace("/\s*((\/\*[^*]*\*+([^\/][^*]*\*+)*\/)*\s*)*$/", "", $s);');
 
 		$property = PEG::many1(PEG::choice($displayCommnet, PEG::char('{}:', true))); // プロパティ 「color:red」の「color」の部分
-		$value    = PEG::many1(PEG::choice($displayCommnet, PEG::char('{;}', true))); // 値 「color:red」の「red」の部分
+		$value    = PEG::many1(PEG::choice($displayCommnet, PEG::token('\}'), PEG::char('{;}', true))); // 値 「color:red」の「red」の部分
 
 		$declarationArr = create_function(
 			'Array $a',
