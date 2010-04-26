@@ -436,9 +436,11 @@ abstract class AValidate implements IValidate
 	{
 		$args = func_get_args();
 		if (!isset($args[0], $args[1])) return false;
-		$method = $this->getPropertyMethod(array_shift($args));
+		list($method, $arg) = $args;
+
+		$method = $this->getPropertyMethod($method);
 		if ($method === false) return false; // メソッドが存在しない/適当でない
-		return call_user_func_array(array($this, $method), $args);
+		return $this->{$method}($arg);
 	}
 
 	/**
