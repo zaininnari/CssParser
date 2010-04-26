@@ -2,22 +2,22 @@
 
 require_once 'PEG.php';
 
-require_once dirname(__FILE__) . '/CssParser/Locator.php';
-require_once dirname(__FILE__) . '/CssParser/Comment.php';
-require_once dirname(__FILE__) . '/CssParser/Ignore.php';
-require_once dirname(__FILE__) . '/CssParser/Block.php';
-require_once dirname(__FILE__) . '/CssParser/NodeCreater.php';
-require_once dirname(__FILE__) . '/CssParser/Node.php';
+require_once dirname(__FILE__) . '/CSSParser/Locator.php';
+require_once dirname(__FILE__) . '/CSSParser/Comment.php';
+require_once dirname(__FILE__) . '/CSSParser/Ignore.php';
+require_once dirname(__FILE__) . '/CSSParser/Block.php';
+require_once dirname(__FILE__) . '/CSSParser/NodeCreater.php';
+require_once dirname(__FILE__) . '/CSSParser/Node.php';
 
-require_once dirname(__FILE__) . '/CssParser/RuleSet.php';
-require_once dirname(__FILE__) . '/CssParser/AtRule.php';
-require_once dirname(__FILE__) . '/CssParser/FontFace.php';
-require_once dirname(__FILE__) . '/CssParser/Page.php';
+require_once dirname(__FILE__) . '/CSSParser/RuleSet.php';
+require_once dirname(__FILE__) . '/CSSParser/AtRule.php';
+require_once dirname(__FILE__) . '/CSSParser/FontFace.php';
+require_once dirname(__FILE__) . '/CSSParser/Page.php';
 
-require_once dirname(__FILE__) . '/CssParser/IValidate.php';
-require_once dirname(__FILE__) . '/CssParser/AValidate.php';
+require_once dirname(__FILE__) . '/CSSParser/IValidate.php';
+require_once dirname(__FILE__) . '/CSSParser/AValidate.php';
 
-class CssParser
+class CSSParser
 {
 
 	static protected $css;
@@ -27,12 +27,12 @@ class CssParser
 	 *
 	 * @param string $css string
 	 *
-	 * @return CssParser_Node
+	 * @return CSSParser_Node
 	 */
 	static function parse($css)
 	{
 		self::$css = self::cssClean($css);
-		$result = CssParser_Locator::it()->parser->parse(PEG::context(self::$css));
+		$result = CSSParser_Locator::it()->parser->parse(PEG::context(self::$css));
 
 		return $result;
 	}
@@ -43,7 +43,7 @@ class CssParser
 	 * @param string $css  css
 	 * @param string $type type
 	 *
-	 * @return CssParser_Node
+	 * @return CSSParser_Node
 	 */
 	static function validate($css, $type = null)
 	{
