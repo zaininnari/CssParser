@@ -1,5 +1,5 @@
 <?php
-class Css3 extends AValidate
+class CSS3 extends AValidate
 {
 
 
