@@ -10,6 +10,7 @@ require_once dirname(__FILE__) . '/CSSParser/NodeCreater.php';
 require_once dirname(__FILE__) . '/CSSParser/Node.php';
 
 require_once dirname(__FILE__) . '/CSSParser/RuleSet.php';
+require_once dirname(__FILE__) . '/CSSParser/MediaQuery.php';
 require_once dirname(__FILE__) . '/CSSParser/AtRule.php';
 require_once dirname(__FILE__) . '/CSSParser/FontFace.php';
 require_once dirname(__FILE__) . '/CSSParser/Page.php';

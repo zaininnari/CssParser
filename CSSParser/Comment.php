@@ -8,8 +8,6 @@ class CSSParser_Comment implements PEG_IParser
 	 * construct
 	 *
 	 * @param PEG_IParser $parser PEG_IParser
-	 *
-	 * @return unknown_type
 	 */
 	function __construct(PEG_IParser $parser)
 	{

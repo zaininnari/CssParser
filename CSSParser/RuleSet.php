@@ -24,7 +24,7 @@ class CSSParser_RuleSet implements PEG_IParser
 		$unknownBlockRef = PEG::choice($displayCommnet, PEG::ref($unknownBlock), PEG::hook(create_function('$r', 'return $r === false ? PEG::failure() : $r;'), PEG::char('}', true)));
 		$unknownBlock =  PEG::seq('{', PEG::many($unknownBlockRef), '}');
 		$unknownSemicolon = PEG::seq(
-			PEG::many1(PEG::choice($displayCommnet, PEG::char(';', true))),
+			PEG::many1(PEG::choice($displayCommnet, '\;',PEG::char(';', true))),
 			PEG::choice(';', PEG::eos())
 		);
 
@@ -33,8 +33,8 @@ class CSSParser_RuleSet implements PEG_IParser
 		// for PHP <= 5.2
 		$rightCommentTrim = create_function('$s', 'return preg_replace("/\s*((\/\*[^*]*\*+([^\/][^*]*\*+)*\/)*\s*)*$/", "", $s);');
 
-		$property = PEG::many1(PEG::choice($displayCommnet, PEG::char('{}:', true))); // プロパティ 「color:red」の「color」の部分
-		$value    = PEG::many1(PEG::choice($displayCommnet, PEG::token('\}'), PEG::char('{;}', true))); // 値 「color:red」の「red」の部分
+		$property = PEG::many1(PEG::choice($displayCommnet, PEG::choice('\{', '\}', '\:'), PEG::char('{}:', true))); // プロパティ 「color:red」の「color」の部分
+		$value    = PEG::many1(PEG::choice($displayCommnet, '\}', PEG::choice('\{', '\;', '\}'), PEG::char('{;}', true))); // 値 「color:red」の「red」の部分
 
 		$declarationArr = create_function(
 			'Array $a',

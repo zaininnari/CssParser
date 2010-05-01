@@ -22,7 +22,6 @@ class CSSParser_Ignore implements PEG_IParser
 		$p       = PEG::many(PEG::choice($space, $comment));
 
 		$this->parser = $p;
-
 	}
 
 	/**
