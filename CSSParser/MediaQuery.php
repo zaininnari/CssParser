@@ -19,7 +19,11 @@ class MediaQuery implements PEG_IParser
 		$_space = PEG::memo(PEG::choice($_whiteSpace, $comment));
 		$space = PEG::many1($_space);
 		$maybeSpace = PEG::many($_space);
-		$errorToken = CSSPEG::choice($comment, '\,',CSSPEG::char(',', true));
+		$block = PEG::choice(
+			PEG::seq('"', PEG::choice('\"', PEG::char('"', true)),'"'),
+			PEG::seq("'", PEG::choice("\'", PEG::char("'", true)),"'")
+		);
+		$errorToken = CSSPEG::choice($comment, '\,', CSSPEG::char(',', true));
 
 		$restrictor = PEG::optional(
 			new CSSParser_NodeCreater(

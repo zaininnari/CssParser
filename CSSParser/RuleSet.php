@@ -24,7 +24,7 @@ class CSSParser_RuleSet implements PEG_IParser
 		$unknownBlockRef = PEG::choice($displayCommnet, PEG::ref($unknownBlock), PEG::hook(create_function('$r', 'return $r === false ? PEG::failure() : $r;'), PEG::char('}', true)));
 		$unknownBlock =  PEG::seq('{', PEG::many($unknownBlockRef), '}');
 		$unknownSemicolon = PEG::seq(
-			PEG::many1(PEG::choice($displayCommnet, '\;',PEG::char(';', true))),
+			PEG::many1(PEG::choice($displayCommnet, '\;', PEG::char(';', true))),
 			PEG::choice(';', PEG::eos())
 		);
 
@@ -62,7 +62,24 @@ class CSSParser_RuleSet implements PEG_IParser
 					PEG::drop(PEG::choice(';', PEG::amp('}'), PEG::eos()), $ignore)
 				)
 			),
-			new CSSParser_NodeCreater('unknown', PEG::join(PEG::many1($unknownBlockRef)))
+			new CSSParser_NodeCreater(
+				'unknown',
+				PEG::join(
+					PEG::seq(
+						PEG::many1(
+							PEG::hook(
+								create_function('$r', 'return $r === ";" ? PEG::failure() : $r;'),
+								$unknownBlockRef
+							)
+						),
+						PEG::optional(';')
+					)
+				)
+			),
+			new CSSParser_NodeCreater(
+				'unknown',
+				$unknownBlockRef
+			)
 		);
 
 		$selectorChar = PEG::hook(
@@ -70,7 +87,12 @@ class CSSParser_RuleSet implements PEG_IParser
 			$this->selectorChar()
 		);
 
-		$this->unknown = PEG::seq(new CSSParser_NodeCreater('unknown', PEG::join(PEG::choice(PEG::many1($unknownSeleBlockRef), $unknownSemicolon))));
+		$this->unknown = PEG::seq(
+			new CSSParser_NodeCreater(
+				'unknown',
+				PEG::join(PEG::choice(PEG::many1($unknownSeleBlockRef), $unknownSemicolon))
+			)
+		);
 		$parser = PEG::hook(
 			array($this, 'map'),
 			PEG::seq(
