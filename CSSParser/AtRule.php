@@ -30,62 +30,7 @@ class CSSParser_AtRule implements PEG_IParser
 			';'
 		);
 
-		// TODO
-		$mediaType = CSSPEG::seq(
-			CSSPEG::many(
-				CSSPEG::anything(),
-				CSSPEG::drop(CSSPEG::not(CSSPEG::choice($ignore, CSSPEG::char('\\', true)), ';'))
-			),
-			CSSPEG::choice(
-				$ignore,
-				CSSPEG::anything()
-			),
-			CSSPEG::anything()
-		);
-		//$mediaType = CSSPEG::seq(CSSPEG::many1(CSSPEG::choice($displayCommnet, '\;', CSSPEG::char(';', true))));
-		$mediaType = new CSSParser_NodeCreater('mediaType', CSSPEG::join($mediaType));
-		$mediaType = CSSPEG::choice(CSSPEG::drop(';'), CSSPEG::first($mediaType, $ignore, ';'));
 		$mediaType = CSSPEG::synMediaQuery();
-/*
-		// url
-		foreach (array('Double' => '"', 'Single' => '\'', 'No' => null) as $n => $v) {
-			$n = '_importUrlOnly'.$n.'Quotes';
-			${$n} = CSSPEG::seq(
-				new CSSParser_NodeCreater('@import', CSSPEG::token('@import')),
-				CSSPEG::drop(chr(32), $ignore),
-				new CSSParser_NodeCreater(
-					'value',
-					CSSPEG::join(
-						CSSPEG::seq(
-							'url(', CSSPEG::drop($ignore), $v !== null ? $v : '',
-							CSSPEG::many1(CSSPEG::anything(), CSSPEG::drop(CSSPEG::not($v !== null ? CSSPEG::seq(CSSPEG::char('\\', true), $v, $ignore) : $ignore, ')', $ignore, $mediaType))),
-							$v !== null ? CSSPEG::seq(CSSPEG::anything(), CSSPEG::anything()) : CSSPEG::anything(),
-							$v !== null ? $v : '', CSSPEG::drop($ignore), ')'
-						)
-					)
-				),
-				CSSPEG::drop($ignore),
-				$mediaType
-			);
-		}
-
-		// No Url
-		foreach (array('Double' => '"', 'Single' => '\'') as $n => $v) {
-			$n = '_importNoUrl'.$n.'Quotes';
-			${$n} = CSSPEG::seq(
-				new CSSParser_NodeCreater('@import', CSSPEG::token('@import')),
-				CSSPEG::drop(chr(32), $ignore, $v !== null ? $v : ''),
-				new CSSParser_NodeCreater('value', CSSPEG::join(CSSPEG::seq(CSSPEG::many1(CSSPEG::anything(), CSSPEG::drop(CSSPEG::not(($v !== null) ? CSSPEG::seq(CSSPEG::char('\\', true), $v, $ignore) : $ignore, $mediaType))), ($v !== null) ? CSSPEG::seq(CSSPEG::anything(), CSSPEG::anything()) : CSSPEG::anything()))),
-				CSSPEG::drop($v !== null ? $v : '', $ignore),
-				$mediaType
-			);
-		}
-
-		$import = CSSPEG::choice(
-			$_importUrlOnlyDoubleQuotes, $_importUrlOnlySingleQuotes, $_importUrlOnlyNoQuotes,
-			$_importNoUrlDoubleQuotes, $_importNoUrlSingleQuotes
-		);
-*/
 		$import = CSSPEG::seq(
 			new CSSParser_NodeCreater('@import', CSSPEG::token('@import')),
 			CSSPEG::drop($ignore),
