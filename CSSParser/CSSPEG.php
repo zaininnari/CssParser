@@ -26,7 +26,7 @@ class CSSPEG extends PEG
 	/**
 	 * h		[0-9a-f]
 	 *
-	 * @return PEG_Choice
+	 * @return PEG_IParser
 	 */
 	protected static function defH()
 	{
@@ -37,7 +37,7 @@ class CSSPEG extends PEG
 	/**
 	 * nonascii
 	 *
-	 * @return PEG_Choice
+	 * @return PEG_IParser
 	 */
 	protected static function defNonAscii()
 	{
@@ -48,7 +48,7 @@ class CSSPEG extends PEG
 	/**
 	 * unicode		\\{h}{1,6}(\r\n|[ \t\r\n\f])?
 	 *
-	 * @return PEG_Choice
+	 * @return PEG_IParser
 	 */
 	protected static function defUnicode()
 	{
@@ -71,7 +71,7 @@ class CSSPEG extends PEG
 	 * escape		{unicode}|\\[ -~\200-\377]
 	 * 32 - 126 128 - 255
 	 *
-	 * @return PEG_Choice
+	 * @return PEG_IParser
 	 */
 	protected static function defEscape()
 	{
@@ -99,7 +99,7 @@ class CSSPEG extends PEG
 	/**
 	 * nmstart		[a-z]|{nonascii}|{escape}
 	 *
-	 * @return PEG_Choice
+	 * @return PEG_IParser
 	 */
 	protected static function defNmstart()
 	{
@@ -114,7 +114,7 @@ class CSSPEG extends PEG
 	/**
 	 * nmchar		[a-z0-9-]|{nonascii}|{escape}
 	 *
-	 * @return PEG_Choice
+	 * @return PEG_IParser
 	 */
 	protected static function defNmchar()
 	{
@@ -146,7 +146,7 @@ class CSSPEG extends PEG
 	 *      |
 	 * ~   -> 126
 	 *
-	 * @return
+	 * @return PEG_IParser
 	 */
 	protected static function defString()
 	{
@@ -167,7 +167,7 @@ class CSSPEG extends PEG
 							self::choice(
 								self::seq('\\', self::defWhiteSpace()),
 								'\'',
-								self::defNonAscii(),self::defEscape(),
+								self::defNonAscii(), self::defEscape(),
 								$r
 							)
 						),
@@ -197,7 +197,7 @@ class CSSPEG extends PEG
 	/**
 	 * hexcolor		{h}{3}|{h}{6}
 	 *
-	 * @return PEG_Choice
+	 * @return PEG_IParser
 	 */
 	protected static function defHexcolor()
 	{
@@ -219,7 +219,7 @@ class CSSPEG extends PEG
 	/**
 	 * ident           -?{nmstart}{nmchar}*
 	 *
-	 * @return PEG_Choice
+	 * @return PEG_IParser
 	 */
 	protected static function defIdent()
 	{
@@ -236,7 +236,7 @@ class CSSPEG extends PEG
 	/**
 	 * name            {nmchar}+
 	 *
-	 * @return PEG_Choice
+	 * @return PEG_IParser
 	 */
 	protected static function defName()
 	{
@@ -251,7 +251,7 @@ class CSSPEG extends PEG
 	/**
 	 * num             [0-9]+|[0-9]*"."[0-9]+
 	 *
-	 * @return PEG_Choice
+	 * @return PEG_IParser
 	 */
 	protected static function defNum()
 	{
@@ -273,7 +273,7 @@ class CSSPEG extends PEG
 	/**
 	 * intnum          [0-9]+
 	 *
-	 * @return PEG_Choice
+	 * @return PEG_IParser
 	 */
 	protected static function defIntnum()
 	{
@@ -301,7 +301,7 @@ class CSSPEG extends PEG
 	 *      |
 	 * ~   -> 126
 	 *
-	 * @return PEG_Choice
+	 * @return PEG_IParser
 	 */
 	protected static function defUrl()
 	{
@@ -322,6 +322,11 @@ class CSSPEG extends PEG
 		return $o;
 	}
 
+	/**
+	 * [ \t\r\n\f]
+	 *
+	 * @return PEG_IParser
+	 */
 	protected static function defWhiteSpace()
 	{
 		static $obj = null;
@@ -331,7 +336,7 @@ class CSSPEG extends PEG
 	/**
 	 * w		[ \t\r\n\f]*
 	 *
-	 * @return PEG_Choice
+	 * @return PEG_IParser
 	 */
 	protected static function defW()
 	{
@@ -346,7 +351,7 @@ class CSSPEG extends PEG
 	/**
 	 * range		\?{1,6}|{h}(\?{0,5}|{h}(\?{0,4}|{h}(\?{0,3}|{h}(\?{0,2}|{h}(\??|{h})))))
 	 *
-	 * @return PEG_Choice
+	 * @return PEG_IParser
 	 */
 	protected static function defRange()
 	{
@@ -422,7 +427,7 @@ class CSSPEG extends PEG
 	/**
 	 * nth             [\+-]?{intnum}*n([\+-]{intnum})?
 	 *
-	 * @return PEG_Choice
+	 * @return PEG_IParser
 	 */
 	protected static function defNth()
 	{
@@ -451,7 +456,7 @@ class CSSPEG extends PEG
 	/**
 	 * [ \t\r\n\f]+            {countLines(); yyTok = WHITESPACE; return yyTok;}
 	 *
-	 * @return PEG_Choice
+	 * @return PEG_IParser
 	 */
 	public static function ruleWHITESPACE()
 	{
@@ -470,7 +475,7 @@ class CSSPEG extends PEG
 	 * "$="                    {yyTok = ENDSWITH; return yyTok;}
 	 * "*="                    {yyTok = CONTAINS; return yyTok;}
 	 *
-	 * @return PEG_Choice
+	 * @return PEG_IParser
 	 */
 	public static function ruleMatchPart()
 	{
@@ -481,7 +486,7 @@ class CSSPEG extends PEG
 	/**
 	 * <mediaquery>"not"       {yyTok = MEDIA_NOT; return yyTok;}
 	 *
-	 * @return PEG_Choice
+	 * @return PEG_IParser
 	 */
 	public static function ruleMEDIA_NOT()
 	{
@@ -492,7 +497,7 @@ class CSSPEG extends PEG
 	/**
 	 * <mediaquery>"only"      {yyTok = MEDIA_ONLY; return yyTok;}
 	 *
-	 * @return PEG_Choice
+	 * @return PEG_IParser
 	 */
 	public static function ruleMEDIA_ONLY()
 	{
@@ -503,7 +508,7 @@ class CSSPEG extends PEG
 	/**
 	 * <mediaquery>"and"       {yyTok = MEDIA_AND; return yyTok;}
 	 *
-	 * @return PEG_Choice
+	 * @return PEG_IParser
 	 */
 	public static function ruleMEDIA_AND()
 	{
@@ -514,7 +519,7 @@ class CSSPEG extends PEG
 	/**
 	 * <forkeyword>"for"       {BEGIN(mediaquery); yyTok = VARIABLES_FOR; return yyTok; }
 	 *
-	 * @return PEG_Choice
+	 * @return PEG_IParser
 	 */
 	public static function ruleVARIABLES_FOR()
 	{
@@ -525,7 +530,7 @@ class CSSPEG extends PEG
 	/**
 	 * {string}                {yyTok = STRING; return yyTok;}
 	 *
-	 * @return PEG_Choice
+	 * @return PEG_IParser
 	 */
 	public static function ruleSTRING()
 	{
@@ -536,7 +541,7 @@ class CSSPEG extends PEG
 	/**
 	 * {ident}                 {yyTok = IDENT; return yyTok;}
 	 *
-	 * @return PEG_Choice
+	 * @return PEG_IParser
 	 */
 	public static function ruleIDENT()
 	{
@@ -547,7 +552,7 @@ class CSSPEG extends PEG
 	/**
 	 * {nth}                   {yyTok = NTH; return yyTok;}
 	 *
-	 * @return PEG_Choice
+	 * @return PEG_IParser
 	 */
 	public static function ruleNTH()
 	{
@@ -558,7 +563,7 @@ class CSSPEG extends PEG
 	/**
 	 * "#"{hexcolor}           {yyTok = HEX; return yyTok;}
 	 *
-	 * @return PEG_Choice
+	 * @return PEG_IParser
 	 */
 	public static function ruleHEX()
 	{
@@ -574,7 +579,7 @@ class CSSPEG extends PEG
 	/**
 	 * "#"{ident}              {yyTok = IDSEL; return yyTok;}
 	 *
-	 * @return PEG_Choice
+	 * @return PEG_IParser
 	 */
 	public static function ruleIDSEL()
 	{
@@ -590,7 +595,7 @@ class CSSPEG extends PEG
 	/**
 	 * "@import"               {BEGIN(mediaquery); yyTok = IMPORT_SYM; return yyTok;}
 	 *
-	 * @return PEG_Choice
+	 * @return PEG_IParser
 	 */
 	public static function ruleIMPORT_SYM()
 	{
@@ -601,7 +606,7 @@ class CSSPEG extends PEG
 	/**
 	 * "@page"                 {yyTok = PAGE_SYM; return yyTok;}
 	 *
-	 * @return PEG_Choice
+	 * @return PEG_IParser
 	 */
 	public static function rulePAGE_SYM()
 	{
@@ -612,7 +617,7 @@ class CSSPEG extends PEG
 	/**
 	 * "@media"                {BEGIN(mediaquery); yyTok = MEDIA_SYM; return yyTok;}
 	 *
-	 * @return PEG_Choice
+	 * @return PEG_IParser
 	 */
 	public static function ruleMEDIA_SYM()
 	{
@@ -623,7 +628,7 @@ class CSSPEG extends PEG
 	/**
 	 * "@font-face"            {yyTok = FONT_FACE_SYM; return yyTok;}
 	 *
-	 * @return PEG_Choice
+	 * @return PEG_IParser
 	 */
 	public static function ruleFONT_FACE_SYM()
 	{
@@ -634,7 +639,7 @@ class CSSPEG extends PEG
 	/**
 	 * "@charset"              {yyTok = CHARSET_SYM; return yyTok;}
 	 *
-	 * @return PEG_Choice
+	 * @return PEG_IParser
 	 */
 	public static function ruleCHARSET_SYM()
 	{
@@ -645,7 +650,7 @@ class CSSPEG extends PEG
 	/**
 	 * "@namespace"            {yyTok = NAMESPACE_SYM; return yyTok; }
 	 *
-	 * @return PEG_Choice
+	 * @return PEG_IParser
 	 */
 	public static function ruleNAMESPACE_SYM()
 	{
@@ -656,7 +661,7 @@ class CSSPEG extends PEG
 	/**
 	 * "@"{ident}              {yyTok = ATKEYWORD; return yyTok; }
 	 *
-	 * @return PEG_Choice
+	 * @return PEG_IParser
 	 */
 	public static function ruleATKEYWORD()
 	{
@@ -672,7 +677,7 @@ class CSSPEG extends PEG
 	/**
 	 * "!"{w}"important"       {yyTok = IMPORTANT_SYM; return yyTok;}
 	 *
-	 * @return PEG_Choice
+	 * @return PEG_IParser
 	 */
 	public static function ruleIMPORTANT_SYM()
 	{
@@ -706,7 +711,7 @@ class CSSPEG extends PEG
 	 * {num}Hz                 {yyTok = HERZ; return yyTok;}
 	 * {num}kHz                {yyTok = KHERZ; return yyTok;}
 	 *
-	 * @return PEG_Choice
+	 * @return PEG_IParser
 	 */
 	public static function ruleUnit()
 	{
@@ -741,7 +746,7 @@ class CSSPEG extends PEG
 	/**
 	 * {num}{ident}            {yyTok = DIMEN; return yyTok;}
 	 *
-	 * @return PEG_Choice
+	 * @return PEG_IParser
 	 */
 	public static function ruleDIMEN()
 	{
@@ -757,7 +762,7 @@ class CSSPEG extends PEG
 	/**
 	 * {num}%+                 {yyTok = PERCENTAGE; return yyTok;}
 	 *
-	 * @return PEG_Choice
+	 * @return PEG_IParser
 	 */
 	public static function rulePERCENTAGE()
 	{
@@ -773,7 +778,7 @@ class CSSPEG extends PEG
 	/**
 	 * {intnum}                {yyTok = INTEGER; return yyTok;}
 	 *
-	 * @return PEG_Choice
+	 * @return PEG_IParser
 	 */
 	public static function ruleINTEGER()
 	{
@@ -784,7 +789,7 @@ class CSSPEG extends PEG
 	/**
 	 * {num}                   {yyTok = FLOATTOKEN; return yyTok;}
 	 *
-	 * @return PEG_Choice
+	 * @return PEG_IParser
 	 */
 	public static function ruleFLOATTOKEN()
 	{
@@ -795,7 +800,7 @@ class CSSPEG extends PEG
 	/**
 	 * "not("                  {yyTok = NOTFUNCTION; return yyTok;}
 	 *
-	 * @return PEG_Choice
+	 * @return PEG_IParser
 	 */
 	public static function ruleNOTFUNCTION()
 	{
@@ -807,7 +812,7 @@ class CSSPEG extends PEG
 	 * "url("{w}{string}{w}")" {yyTok = URI; return yyTok;}
 	 * "url("{w}{url}{w}")"    {yyTok = URI; return yyTok;}
 	 *
-	 * @return PEG_Choice
+	 * @return PEG_IParser
 	 */
 	public static function ruleURI()
 	{
@@ -838,7 +843,7 @@ class CSSPEG extends PEG
 	/**
 	 * {ident}"("              {yyTok = FUNCTION; return yyTok;}
 	 *
-	 * @return PEG_Choice
+	 * @return PEG_IParser
 	 */
 	public static function ruleFUNCTION()
 	{
@@ -855,7 +860,7 @@ class CSSPEG extends PEG
 	 * U\+{range}              {yyTok = UNICODERANGE; return yyTok;}
 	 * U\+{h}{1,6}-{h}{1,6}    {yyTok = UNICODERANGE; return yyTok;}
 	 *
-	 * @return PEG_Choice
+	 * @return PEG_IParser
 	 */
 	public static function ruleUNICODERANGE()
 	{
@@ -888,6 +893,11 @@ class CSSPEG extends PEG
 		);
 	}
 
+	/**
+	 * commnt
+	 *
+	 * @return PEG_IParser
+	 */
 	public static function ruleComment()
 	{
 		static $o = null;
@@ -898,6 +908,11 @@ class CSSPEG extends PEG
 		);
 	}
 
+	/**
+	 * space
+	 *
+	 * @return PEG_IParser
+	 */
 	public static function ruleSpace()
 	{
 		static $o = null;
@@ -910,22 +925,33 @@ class CSSPEG extends PEG
 	// rules }}}
 
 
+	/**
+	 * comment
+	 *
+	 * @return PEG_IParser
+	 */
 	public static function synComment()
 	{
 		static $o = null;
-		return $o !== null ? $o : self::seq(
-			'/*',
-			self::many(self::tail(self::not('*/'), self::anything())),
-			self::choice('*/', self::eos())
-		);
+		return $o !== null ? $o : self::ruleComment();
 	}
 
+	/**
+	 * space
+	 *
+	 * @return PEG_IParser
+	 */
 	public static function synSpace()
 	{
 		static $o = null;
 		return $o !== null ? $o : self::many1(self::ruleSpace());
 	}
 
+	/**
+	 * maybe space
+	 *
+	 * @return PEG_IParser
+	 */
 	public static function synMaybeSpace()
 	{
 		static $o = null;
@@ -933,6 +959,11 @@ class CSSPEG extends PEG
 	}
 
 
+	/**
+	 * expr
+	 *
+	 * @return PEG_IParser
+	 */
 	public static function synExpr()
 	{
 		static $o = null;
@@ -943,6 +974,11 @@ class CSSPEG extends PEG
 		);
 	}
 
+	/**
+	 * UnknownBlockRef
+	 *
+	 * @return PEG_IParser
+	 */
 	public static function synUnknownBlockRef()
 	{
 		static $o = null;
@@ -965,32 +1001,11 @@ class CSSPEG extends PEG
 		return $blockRef;
 	}
 
-
-	public static function synUnknown()
-	{
-		static $o = null;
-		if ($o === null) {
-			$blockRef = self::choice(
-				self::synComment(),
-				self::ref($block),
-				self::hook(
-					create_function('$r', 'return $r === false ? self::failure() : $r;'),
-					self::char(';}', true)
-				)
-			);
-			$block = self::seq(
-				'{',
-				self::many($blockRef),
-				'}'
-			);
-		}
-
-		return $blockRef;
-	}
-
-
-
-
+	/**
+	 * MediaQuery
+	 *
+	 * @return PEG_IParser
+	 */
 	public static function synMediaQuery()
 	{
 		static $o = null;
