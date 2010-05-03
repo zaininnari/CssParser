@@ -1,16 +1,14 @@
 <?php
 
 require_once 'PEG.php';
+require_once dirname(__FILE__) . '/CSSParser/CSSPEG.php';
 
 require_once dirname(__FILE__) . '/CSSParser/Locator.php';
-require_once dirname(__FILE__) . '/CSSParser/Comment.php';
-require_once dirname(__FILE__) . '/CSSParser/Ignore.php';
 require_once dirname(__FILE__) . '/CSSParser/Block.php';
 require_once dirname(__FILE__) . '/CSSParser/NodeCreater.php';
 require_once dirname(__FILE__) . '/CSSParser/Node.php';
 
 require_once dirname(__FILE__) . '/CSSParser/RuleSet.php';
-require_once dirname(__FILE__) . '/CSSParser/MediaQuery.php';
 require_once dirname(__FILE__) . '/CSSParser/AtRule.php';
 require_once dirname(__FILE__) . '/CSSParser/FontFace.php';
 require_once dirname(__FILE__) . '/CSSParser/Page.php';
@@ -33,7 +31,7 @@ class CSSParser
 	static function parse($css)
 	{
 		self::$css = self::cssClean($css);
-		$result = CSSParser_Locator::it()->parser->parse(PEG::context(self::$css));
+		$result = CSSParser_Locator::it()->parser->parse(CSSPEG::context(self::$css));
 
 		return $result;
 	}

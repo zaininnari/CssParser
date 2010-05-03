@@ -13,45 +13,58 @@ class CSSParser_AtRule implements PEG_IParser
 	 */
 	function __construct(PEG_IParser $parser)
 	{
-		$ignore = new CSSParser_Ignore(PEG::anything());
+		$ignore = CSSPEG::synMaybeSpace();
 		// 無視しないコメント
-		$displayCommnet = PEG::seq('/*', PEG::many(PEG::tail(PEG::not('*/'), PEG::anything())), '*/');
+		$displayCommnet = CSSPEG::synComment();
 
 		// PEGの左再帰対策
 		// 右側にあるコメントと空白を削除する
 		// for PHP <= 5.2
 		$rightCommentTrim = create_function('$s', 'return preg_replace("/\s*((\/\*[^*]*\*+([^\/][^*]*\*+)*\/)*\s*)*$/", "", $s);');
 
-		$_charsetMain = PEG::seq(PEG::many1(PEG::anything(), PEG::drop(PEG::not(PEG::char('\\', true), '"'))), PEG::anything(), PEG::anything());
-		$charset = PEG::seq(
-			new CSSParser_NodeCreater('@charset', PEG::token('@charset')),
-			PEG::drop(' "'),
-			new CSSParser_NodeCreater('value', PEG::join($_charsetMain)),
-			PEG::drop('";')
+		$charset = CSSPEG::seq(
+			new CSSParser_NodeCreater('@charset', CSSPEG::token('@charset')),
+			CSSPEG::drop($ignore),
+			new CSSParser_NodeCreater('value', CSSPEG::ruleSTRING()),
+			CSSPEG::drop($ignore),
+			';'
 		);
 
-		$mediaType = PEG::seq(PEG::many(PEG::anything(), PEG::drop(PEG::not(PEG::choice($ignore, PEG::char('\\', true)), ';'))), PEG::choice($ignore, PEG::anything()), PEG::anything());
-		$mediaType = new CSSParser_NodeCreater('mediaType', PEG::join($mediaType));
-		$mediaType = PEG::choice(PEG::drop(';'), PEG::first($mediaType, $ignore, ';'));
-
+		// TODO
+		$mediaType = CSSPEG::seq(
+			CSSPEG::many(
+				CSSPEG::anything(),
+				CSSPEG::drop(CSSPEG::not(CSSPEG::choice($ignore, CSSPEG::char('\\', true)), ';'))
+			),
+			CSSPEG::choice(
+				$ignore,
+				CSSPEG::anything()
+			),
+			CSSPEG::anything()
+		);
+		//$mediaType = CSSPEG::seq(CSSPEG::many1(CSSPEG::choice($displayCommnet, '\;', CSSPEG::char(';', true))));
+		$mediaType = new CSSParser_NodeCreater('mediaType', CSSPEG::join($mediaType));
+		$mediaType = CSSPEG::choice(CSSPEG::drop(';'), CSSPEG::first($mediaType, $ignore, ';'));
+		$mediaType = CSSPEG::synMediaQuery();
+/*
 		// url
 		foreach (array('Double' => '"', 'Single' => '\'', 'No' => null) as $n => $v) {
 			$n = '_importUrlOnly'.$n.'Quotes';
-			${$n} = PEG::seq(
-				new CSSParser_NodeCreater('@import', PEG::token('@import')),
-				PEG::drop(chr(32), $ignore),
+			${$n} = CSSPEG::seq(
+				new CSSParser_NodeCreater('@import', CSSPEG::token('@import')),
+				CSSPEG::drop(chr(32), $ignore),
 				new CSSParser_NodeCreater(
 					'value',
-					PEG::join(
-						PEG::seq(
-							'url(', PEG::drop($ignore), $v !== null ? $v : '',
-							PEG::many1(PEG::anything(), PEG::drop(PEG::not($v !== null ? PEG::seq(PEG::char('\\', true), $v, $ignore) : $ignore, ')', $ignore, $mediaType))),
-							$v !== null ? PEG::seq(PEG::anything(), PEG::anything()) : PEG::anything(),
-							$v !== null ? $v : '', PEG::drop($ignore), ')'
+					CSSPEG::join(
+						CSSPEG::seq(
+							'url(', CSSPEG::drop($ignore), $v !== null ? $v : '',
+							CSSPEG::many1(CSSPEG::anything(), CSSPEG::drop(CSSPEG::not($v !== null ? CSSPEG::seq(CSSPEG::char('\\', true), $v, $ignore) : $ignore, ')', $ignore, $mediaType))),
+							$v !== null ? CSSPEG::seq(CSSPEG::anything(), CSSPEG::anything()) : CSSPEG::anything(),
+							$v !== null ? $v : '', CSSPEG::drop($ignore), ')'
 						)
 					)
 				),
-				PEG::drop($ignore),
+				CSSPEG::drop($ignore),
 				$mediaType
 			);
 		}
@@ -59,57 +72,72 @@ class CSSParser_AtRule implements PEG_IParser
 		// No Url
 		foreach (array('Double' => '"', 'Single' => '\'') as $n => $v) {
 			$n = '_importNoUrl'.$n.'Quotes';
-			${$n} = PEG::seq(
-				new CSSParser_NodeCreater('@import', PEG::token('@import')),
-				PEG::drop(chr(32), $ignore, $v !== null ? $v : ''),
-				new CSSParser_NodeCreater('value', PEG::join(PEG::seq(PEG::many1(PEG::anything(), PEG::drop(PEG::not(($v !== null) ? PEG::seq(PEG::char('\\', true), $v, $ignore) : $ignore, $mediaType))), ($v !== null) ? PEG::seq(PEG::anything(), PEG::anything()) : PEG::anything()))),
-				PEG::drop($v !== null ? $v : '', $ignore),
+			${$n} = CSSPEG::seq(
+				new CSSParser_NodeCreater('@import', CSSPEG::token('@import')),
+				CSSPEG::drop(chr(32), $ignore, $v !== null ? $v : ''),
+				new CSSParser_NodeCreater('value', CSSPEG::join(CSSPEG::seq(CSSPEG::many1(CSSPEG::anything(), CSSPEG::drop(CSSPEG::not(($v !== null) ? CSSPEG::seq(CSSPEG::char('\\', true), $v, $ignore) : $ignore, $mediaType))), ($v !== null) ? CSSPEG::seq(CSSPEG::anything(), CSSPEG::anything()) : CSSPEG::anything()))),
+				CSSPEG::drop($v !== null ? $v : '', $ignore),
 				$mediaType
 			);
 		}
 
-		$import = PEG::choice(
+		$import = CSSPEG::choice(
 			$_importUrlOnlyDoubleQuotes, $_importUrlOnlySingleQuotes, $_importUrlOnlyNoQuotes,
 			$_importNoUrlDoubleQuotes, $_importNoUrlSingleQuotes
 		);
+*/
+		$import = CSSPEG::seq(
+			new CSSParser_NodeCreater('@import', CSSPEG::token('@import')),
+			CSSPEG::drop($ignore),
+			new CSSParser_NodeCreater(
+				'value',
+				CSSPEG::choice(
+					CSSPEG::ruleSTRING(),
+					CSSPEG::ruleURI()
+				)
+			),
+			CSSPEG::drop($ignore),
+			$mediaType,
+			';'
+		);
 
-		$mediaChar = PEG::hook(
+		$mediaChar = CSSPEG::hook(
 			$rightCommentTrim,
-			PEG::join(PEG::seq('@media', PEG::many1(PEG::choice($displayCommnet, PEG::char('{;', true)))))
+			CSSPEG::join(CSSPEG::seq('@media', CSSPEG::many1(CSSPEG::choice($displayCommnet, CSSPEG::char('{;', true)))))
 		);
 
 		$checkEnd = create_function(
 			'$a',
 			'
-			if ($a instanceof PEG_Failure) return PEG::failure();
+			if ($a instanceof PEG_Failure) return CSSPEG::failure();
 			if (mb_strpos($a["selector"]->getData(), "}") === 0) {
-				return PEG::failure();
+				return CSSPEG::failure();
 			}
 			return $a;
 			'
 		);
-		$media = PEG::seq(
+		$media = CSSPEG::seq(
 			new CSSParser_NodeCreater('@media', $mediaChar),
-			PEG::drop('{', $ignore),
-			PEG::many(
-				PEG::second(
-					PEG::hook($checkEnd, PEG::amp(new CSSParser_RuleSet(PEG::anything()))),
-					new CSSParser_RuleSet(PEG::anything())
+			CSSPEG::drop('{', $ignore),
+			CSSPEG::many(
+				CSSPEG::second(
+					CSSPEG::hook($checkEnd, CSSPEG::amp(new CSSParser_RuleSet(CSSPEG::anything()))),
+					new CSSParser_RuleSet(CSSPEG::anything())
 				)
 			),
-			PEG::drop(PEG::choice('}', PEG::eos()))
+			CSSPEG::drop(CSSPEG::choice('}', CSSPEG::eos()))
 		);
 
-		$parser = PEG::choice(
+		$parser = CSSPEG::choice(
 			$charset,
 			$import,
 			$media,
-			new CSSParser_FontFace(PEG::anything()),
-			new CSSParser_Page(PEG::anything()),
-			new CSSParser_RuleSet(PEG::anything())
+			new CSSParser_FontFace(CSSPEG::anything()),
+			new CSSParser_Page(CSSPEG::anything()),
+			new CSSParser_RuleSet(CSSPEG::anything())
 		);
 
-		$this->parser = PEG::memo($parser);
+		$this->parser = CSSPEG::memo($parser);
 	}
 
 	/**

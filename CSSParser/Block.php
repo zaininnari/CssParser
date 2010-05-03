@@ -15,7 +15,7 @@ class CSSParser_Block implements PEG_IParser
 	public function __construct(CSSParser_Locator $locator)
 	{
 		$this->ruleSet = $locator->ruleSet;
-		$this->ignore = $locator->ignore;
+		$this->ignore = CSSPEG::synMaybeSpace();
 		$this->firstCharTable = array(
 			'@' => $locator->atRule
 		);
@@ -34,7 +34,7 @@ class CSSParser_Block implements PEG_IParser
 	public function parse(PEG_IContext $context)
 	{
 		$this->ignore->parse($context);             // 空白&コメントを無視する
-		if ($context->eos()) return PEG::failure(); // 読むべきものがなくなったら終了
+		if ($context->eos()) return CSSPEG::failure(); // 読むべきものがなくなったら終了
 		$char = $context->readElement();            // チェック用に1つ取得する
 		$context->seek($context->tell() - 1);       // チェック用に動かしたので、1つ戻す
 

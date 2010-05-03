@@ -26,6 +26,6 @@ class CSSParser_Page extends CSSParser_RuleSet
 	 */
 	function selectorChar()
 	{
-		return PEG::join(PEG::seq('@page', PEG::many1(PEG::choice($this->displayCommnet, PEG::char('{;', true)))));
+		return CSSPEG::join(CSSPEG::seq('@page', CSSPEG::many1(CSSPEG::choice($this->displayCommnet, CSSPEG::char('{;', true)))));
 	}
 }

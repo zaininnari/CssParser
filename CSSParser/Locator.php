@@ -13,7 +13,7 @@ class CSSParser_Locator
 	protected function setup()
 	{
 		$this->block;
-		$this->blockRef = PEG::memo(new CSSParser_Block($this));
+		$this->blockRef = CSSPEG::memo(new CSSParser_Block($this));
 	}
 
 	static function it()
@@ -36,7 +36,7 @@ class CSSParser_Locator
 
 	protected function createBlock()
 	{
-		return PEG::ref($this->blockRef);
+		return CSSPEG::ref($this->blockRef);
 	}
 
 	protected function createRuleSet()
@@ -45,21 +45,15 @@ class CSSParser_Locator
 		return $this->nodeCreater('ruleSet', $parser);
 	}
 
-	protected function createIgnore()
-	{
-		$parser = PEG::memo(new CSSParser_Ignore($this->Block));
-		return $parser;
-	}
-
 	protected function createAtRule()
 	{
-		$parser = PEG::memo(new CSSParser_AtRule($this->Block));
+		$parser = CSSPEG::memo(new CSSParser_AtRule($this->Block));
 		return $this->nodeCreater('atRule', $parser);
 	}
 
 	protected function createParser()
 	{
-		return $this->nodeCreater('root', PEG::many($this->block));
+		return $this->nodeCreater('root', CSSPEG::many($this->block));
 	}
 
 }

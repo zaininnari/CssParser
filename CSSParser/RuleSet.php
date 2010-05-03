@@ -14,18 +14,18 @@ class CSSParser_RuleSet implements PEG_IParser
 	 */
 	function __construct(PEG_IParser $parser)
 	{
-		$ignore  = PEG::memo(new CSSParser_Ignore($parser));
+		$ignore  = CSSPEG::synMaybeSpace();
 		// 無視しないコメント
-		$this->displayCommnet = $displayCommnet = PEG::seq('/*', PEG::many(PEG::tail(PEG::not('*/'), PEG::anything())), '*/');
+		$this->displayCommnet = $displayCommnet = CSSPEG::synComment();
 
 		// エラートークン。「{}」のネストに対応
-		$unknownSeleBlockRef = PEG::choice($displayCommnet, PEG::ref($unknownSeleBlock));
-		$unknownSeleBlock =  PEG::seq('{', PEG::many($unknownSeleBlockRef), '}');
-		$unknownBlockRef = PEG::choice($displayCommnet, PEG::ref($unknownBlock), PEG::hook(create_function('$r', 'return $r === false ? PEG::failure() : $r;'), PEG::char('}', true)));
-		$unknownBlock =  PEG::seq('{', PEG::many($unknownBlockRef), '}');
-		$unknownSemicolon = PEG::seq(
-			PEG::many1(PEG::choice($displayCommnet, '\;', PEG::char(';', true))),
-			PEG::choice(';', PEG::eos())
+		$unknownSeleBlockRef = CSSPEG::choice($displayCommnet, CSSPEG::ref($unknownSeleBlock));
+		$unknownSeleBlock =  CSSPEG::seq('{', CSSPEG::many($unknownSeleBlockRef), '}');
+
+		$unknownBlockRef = CSSPEG::synUnknownBlockRef();
+		$unknownSemicolon = CSSPEG::seq(
+			CSSPEG::many1(CSSPEG::choice($displayCommnet, '\;', CSSPEG::char(';', true))),
+			CSSPEG::choice(';', CSSPEG::eos())
 		);
 
 		// PEGの左再帰対策
@@ -33,8 +33,8 @@ class CSSParser_RuleSet implements PEG_IParser
 		// for PHP <= 5.2
 		$rightCommentTrim = create_function('$s', 'return preg_replace("/\s*((\/\*[^*]*\*+([^\/][^*]*\*+)*\/)*\s*)*$/", "", $s);');
 
-		$property = PEG::many1(PEG::choice($displayCommnet, PEG::choice('\{', '\}', '\:'), PEG::char('{}:', true))); // プロパティ 「color:red」の「color」の部分
-		$value    = PEG::many1(PEG::choice($displayCommnet, '\}', PEG::choice('\{', '\;', '\}'), PEG::char('{;}', true))); // 値 「color:red」の「red」の部分
+		$property = CSSPEG::many1(CSSPEG::choice($displayCommnet, CSSPEG::choice('\{', '\}', '\:'), CSSPEG::char('{}:', true))); // プロパティ 「color:red」の「color」の部分
+		$value    = CSSPEG::many1(CSSPEG::choice($displayCommnet, '\}', CSSPEG::choice('\{', '\;', '\}'), CSSPEG::char('{;}', true))); // 値 「color:red」の「red」の部分
 
 		$declarationArr = create_function(
 			'Array $a',
@@ -52,27 +52,27 @@ class CSSParser_RuleSet implements PEG_IParser
 			}
 			return array("property" => $property, "value" => $value, "isImportant" => isset($isImportant) ? $isImportant : false);'
 		);
-		$declaration = PEG::choice(
-			PEG::hook(
+		$declaration = CSSPEG::choice(
+			CSSPEG::hook(
 				$declarationArr,
-				PEG::seq(
-					new CSSParser_NodeCreater('property', PEG::hook($rightCommentTrim, PEG::join($property))),
-					PEG::drop(':', $ignore),
-					new CSSParser_NodeCreater('value', PEG::hook($rightCommentTrim, PEG::join($value))),
-					PEG::drop(PEG::choice(';', PEG::amp('}'), PEG::eos()), $ignore)
+				CSSPEG::seq(
+					new CSSParser_NodeCreater('property', CSSPEG::hook($rightCommentTrim, CSSPEG::join($property))),
+					CSSPEG::drop(':', $ignore),
+					new CSSParser_NodeCreater('value', CSSPEG::hook($rightCommentTrim, CSSPEG::join($value))),
+					CSSPEG::drop(CSSPEG::choice(';', CSSPEG::amp('}'), CSSPEG::eos()), $ignore)
 				)
 			),
 			new CSSParser_NodeCreater(
 				'unknown',
-				PEG::join(
-					PEG::seq(
-						PEG::many1(
-							PEG::hook(
-								create_function('$r', 'return $r === ";" ? PEG::failure() : $r;'),
+				CSSPEG::join(
+					CSSPEG::seq(
+						CSSPEG::many1(
+							CSSPEG::hook(
+								create_function('$r', 'return $r === ";" ? CSSPEG::failure() : $r;'),
 								$unknownBlockRef
 							)
 						),
-						PEG::optional(';')
+						CSSPEG::optional(';')
 					)
 				)
 			),
@@ -82,24 +82,24 @@ class CSSParser_RuleSet implements PEG_IParser
 			)
 		);
 
-		$selectorChar = PEG::hook(
+		$selectorChar = CSSPEG::hook(
 			$rightCommentTrim,
 			$this->selectorChar()
 		);
 
-		$this->unknown = PEG::seq(
+		$this->unknown = CSSPEG::seq(
 			new CSSParser_NodeCreater(
 				'unknown',
-				PEG::join(PEG::choice(PEG::many1($unknownSeleBlockRef), $unknownSemicolon))
+				CSSPEG::join(CSSPEG::choice(CSSPEG::many1($unknownSeleBlockRef), $unknownSemicolon))
 			)
 		);
-		$parser = PEG::hook(
+		$parser = CSSPEG::hook(
 			array($this, 'map'),
-			PEG::seq(
+			CSSPEG::seq(
 				new CSSParser_NodeCreater($this->type, $selectorChar),
-				PEG::drop('{', $ignore),
-				PEG::many($declaration),
-				PEG::drop(PEG::choice(PEG::seq('}', $ignore), PEG::eos()))
+				CSSPEG::drop('{', $ignore),
+				CSSPEG::many($declaration),
+				CSSPEG::drop(CSSPEG::choice(CSSPEG::seq('}', $ignore), CSSPEG::eos()))
 			)
 		);
 
@@ -128,7 +128,7 @@ class CSSParser_RuleSet implements PEG_IParser
 		if ($result instanceof PEG_Failure) $context->seek($offset);
 		else return $this->map($result);
 
-		return PEG::failure();
+		return CSSPEG::failure();
 	}
 
 	/**
@@ -153,7 +153,7 @@ class CSSParser_RuleSet implements PEG_IParser
 	 */
 	function selectorChar()
 	{
-		return PEG::join(PEG::many1(PEG::choice($this->displayCommnet, PEG::char('{;', true))));
+		return CSSPEG::join(CSSPEG::many1(CSSPEG::choice($this->displayCommnet, CSSPEG::char('{;', true))));
 	}
 
 }
