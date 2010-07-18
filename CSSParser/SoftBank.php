@@ -2,13 +2,10 @@
 class SoftBank extends AValidate
 {
 
-
-
 	protected $removeSelectorParseList = array(
 		'adjacent','attribute','first-child','language',
 		'first-line','first-letter','before-after'
 	);
-
 
 	/**
 	 * 初期化

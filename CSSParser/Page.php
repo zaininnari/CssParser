@@ -26,6 +26,20 @@ class CSSParser_Page extends CSSParser_RuleSet
 	 */
 	function selectorChar()
 	{
-		return CSSPEG::join(CSSPEG::seq('@page', CSSPEG::many1(CSSPEG::choice($this->displayCommnet, CSSPEG::char('{;', true)))));
+		//return CSSPEG::synAtRulePage();
+		return CSSPEG::hook(
+			function ($r) {
+				$result = array_combine(array('value', 'name', 'pseudo'), $r);
+				if ($result['pseudo'] !== false) $result['pseudo'] = $r[2][1];
+				return $result;
+			},
+			CSSPEG::seq(
+				'@page',
+				CSSPEG::drop(CSSPEG::synMaybeSpace()),
+				CSSPEG::optional(CSSPEG::ruleIDENT()),
+				CSSPEG::optional(':', CSSPEG::choice('left', 'right', 'first')),
+				CSSPEG::drop(CSSPEG::synMaybeSpace())
+			)
+		);
 	}
 }

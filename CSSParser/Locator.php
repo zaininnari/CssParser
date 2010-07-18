@@ -41,13 +41,13 @@ class CSSParser_Locator
 
 	protected function createRuleSet()
 	{
-		$parser = new CSSParser_RuleSet($this->Block);
+		$parser = new CSSParser_RuleSet();
 		return $this->nodeCreater('ruleSet', $parser);
 	}
 
 	protected function createAtRule()
 	{
-		$parser = CSSPEG::memo(new CSSParser_AtRule($this->Block));
+		$parser = CSSPEG::memo(new CSSParser_AtRule());
 		return $this->nodeCreater('atRule', $parser);
 	}
 

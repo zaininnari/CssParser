@@ -26,6 +26,16 @@ class CSSParser_FontFace extends CSSParser_RuleSet
 	 */
 	function selectorChar()
 	{
+		return CSSPEG::hook(
+			function ($r) {
+				$result = array_combine(array('value'), $r);
+				return $result;
+			},
+			CSSPEG::seq(
+				'@font-face',
+				CSSPEG::drop(CSSPEG::synMaybeSpace())
+			)
+		);
 		return CSSPEG::join(CSSPEG::seq('@font-face', CSSPEG::synMaybeSpace()));
 	}
 }

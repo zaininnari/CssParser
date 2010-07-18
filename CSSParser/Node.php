@@ -33,5 +33,4 @@ class CSSParser_Node
 			: $defaultVal;
 	}
 
-
 }

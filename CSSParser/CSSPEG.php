@@ -2,25 +2,63 @@
 /**
  * PHP CSS Def and Rule
  *
- * PHP 5.2 or higher is required.
+ * PHP 5.3 or higher is required.
  *
  * @license MIT License
  *
- * === BEGIN ===
- * PHP PEG Parser Combinator
- * http://openpear.org/package/PEG
- * @license http://www.opensource.org/licenses/mit-license.php MIT License
- * @author anatoo<anatoo@nequal.jp>
- * ===  END  ===a
- *
  */
 
-require_once 'PEG.php';
 
 require_once dirname(__FILE__) . '/NonAscii.php';
 
 class CSSPEG extends PEG
 {
+	// {{{ const
+	const V_UNKNOWN = 0,
+		V_NUMBER = 1,
+		V_PERCENTAGE = 2,
+		V_EMS = 3,
+		V_EXS = 4,
+		V_PX = 5,
+		V_CM = 6,
+		V_MM = 7,
+		V_IN = 8,
+		V_PT = 9,
+		V_PC = 10,
+		V_DEG = 11,
+		V_RAD = 12,
+		V_GRAD = 13,
+		V_MS = 14,
+		V_S = 15,
+		V_HZ = 16,
+		V_KHZ = 17,
+		V_DIMENSION = 18,
+		V_STRING = 19,
+		V_URI = 20,
+		V_IDENT = 21,
+		V_ATTR = 22,
+		V_COUNTER = 23,
+		V_RECT = 24,
+		V_RGBCOLOR = 25,
+		V_FUNCTION = 26,
+
+		V_PAIR = 100,
+		V_DASHBOARD_REGION = 101,
+		V_UNICODE_RANGE = 102,
+
+		V_PARSER_OPERATOR = 103,
+		V_PARSER_INTEGER = 104,
+		V_PARSER_VARIABLE_FUNCTION_SYNTAX = 105,
+		V_PARSER_HEXCOLOR = 106,
+
+		V_PARSER_IDENTIFIER = 107,
+		V_TURN = 108,
+		V_REMS = 109,
+
+		V_QEM = 1000;
+
+	// }}} const
+
 
 	// {{{ definitions
 	/**
@@ -53,7 +91,7 @@ class CSSPEG extends PEG
 	protected static function defUnicode()
 	{
 		static $o = null;
-		return $o !== null ? $o : self::join(
+		return $o !== null ? $o : $o = self::join(
 			self::seq(
 				'\\',
 				self::defH(),
@@ -104,7 +142,7 @@ class CSSPEG extends PEG
 	protected static function defNmstart()
 	{
 		static $o = null;
-		return $o !== null ? $o : self::choice(
+		return $o !== null ? $o : $o = self::choice(
 			self::alphabet(),
 			self::defNonAscii(),
 			self::defEscape()
@@ -119,7 +157,7 @@ class CSSPEG extends PEG
 	protected static function defNmchar()
 	{
 		static $o = null;
-		return $o !== null ? $o : self::choice(
+		return $o !== null ? $o : $o = self::choice(
 			self::alphabet(),
 			self::digit(),
 			'-',
@@ -195,22 +233,21 @@ class CSSPEG extends PEG
 	}
 
 	/**
-	 * hexcolor		{h}{3}|{h}{6}
+	 * hexcolor		#{h}{3}|{h}{6}
 	 *
 	 * @return PEG_IParser
 	 */
 	protected static function defHexcolor()
 	{
 		static $o = null;
-		return $o !== null ? $o : self::choice(
-			self::join(
+		return $o !== null ? $o : $o = self::seq(
+			'#',
+			self::defH(),
+			self::defH(),
+			self::defH(),
+			self::optional(
 				self::seq(
-					self::defH(), self::defH(), self::defH(),
-					self::optional(
-						self::seq(
-							self::defH(), self::defH(), self::defH()
-						)
-					)
+					self::defH(), self::defH(), self::defH()
 				)
 			)
 		);
@@ -224,7 +261,7 @@ class CSSPEG extends PEG
 	protected static function defIdent()
 	{
 		static $o = null;
-		return $o !== null ? $o : self::join(
+		return $o !== null ? $o : $o = self::join(
 			self::seq(
 				self::choice('-', ''),
 				self::defNmstart(),
@@ -241,7 +278,7 @@ class CSSPEG extends PEG
 	protected static function defName()
 	{
 		static $o = null;
-		return $o !== null ? $o : self::join(
+		return $o !== null ? $o : $o = self::join(
 			self::many1(
 				self::defNmchar()
 			)
@@ -256,16 +293,16 @@ class CSSPEG extends PEG
 	protected static function defNum()
 	{
 		static $o = null;
-		return $o !== null ? $o : self::choice(
-			self::join(
-				self::many1(self::digit())
-			),
+		return $o !== null ? $o : $o = self::choice(
 			self::join(
 				self::seq(
 					self::many(self::digit()),
 					'.',
 					self::many1(self::digit())
 				)
+			),
+			self::join(
+				self::many1(self::digit())
 			)
 		);
 	}
@@ -278,10 +315,11 @@ class CSSPEG extends PEG
 	protected static function defIntnum()
 	{
 		static $o = null;
-		return $o !== null ? $o : self::choice(
-			self::join(
+		return $o !== null ? $o : $o = self::choice(
+			self::join(self::hook(
+				function ($r) {return $r[0] === false && $r[1] === false ? PEG::failure() : $r;},
 				self::many1(self::digit())
-			)
+			))
 		);
 	}
 
@@ -341,7 +379,7 @@ class CSSPEG extends PEG
 	protected static function defW()
 	{
 		static $o = null;
-		return $o !== null ? $o : self::join(
+		return $o !== null ? $o : $o = self::join(
 			self::many(
 				self::defWhiteSpace()
 			)
@@ -356,7 +394,7 @@ class CSSPEG extends PEG
 	protected static function defRange()
 	{
 		static $o = null;
-		return $o !== null ? $o : self::hook(
+		return $o !== null ? $o : $o = self::hook(
 			function($d) {return $d === '' || $d instanceof PEG_Failure ? self::failure() : $d;},
 			self::choice(
 				self::join(
@@ -432,7 +470,7 @@ class CSSPEG extends PEG
 	protected static function defNth()
 	{
 		static $o = null;
-		return $o !== null ? $o : self::join(
+		return $o !== null ? $o : $o = self::join(
 			self::seq(
 				self::optional('+', '-'),
 				self::many(
@@ -461,10 +499,8 @@ class CSSPEG extends PEG
 	public static function ruleWHITESPACE()
 	{
 		static $o = null;
-		return $o !== null ? $o : self::join(
-			self::many1(
-				self::defWhiteSpace()
-			)
+		return $o !== null ? $o : $o = self::many1(
+			self::defWhiteSpace()
 		);
 	}
 
@@ -480,7 +516,7 @@ class CSSPEG extends PEG
 	public static function ruleMatchPart()
 	{
 		static $o = null;
-		return $o !== null ? $o : self::choice('*=', '$=', '^=', '|=', '~=');
+		return $o !== null ? $o : $o = self::choice('*=', '$=', '^=', '|=', '~=');
 	}
 
 	/**
@@ -491,7 +527,7 @@ class CSSPEG extends PEG
 	public static function ruleMEDIA_NOT()
 	{
 		static $o = null;
-		return $o !== null ? $o : self::token('not');
+		return $o !== null ? $o : $o = self::token('not');
 	}
 
 	/**
@@ -502,7 +538,7 @@ class CSSPEG extends PEG
 	public static function ruleMEDIA_ONLY()
 	{
 		static $o = null;
-		return $o !== null ? $o : self::token('only');
+		return $o !== null ? $o : $o = self::token('only');
 	}
 
 	/**
@@ -513,7 +549,7 @@ class CSSPEG extends PEG
 	public static function ruleMEDIA_AND()
 	{
 		static $o = null;
-		return $o !== null ? $o : self::token('and');
+		return $o !== null ? $o : $o = self::token('and');
 	}
 
 	/**
@@ -524,7 +560,7 @@ class CSSPEG extends PEG
 	public static function ruleVARIABLES_FOR()
 	{
 		static $o = null;
-		return $o !== null ? $o : self::token('for');
+		return $o !== null ? $o : $o = self::token('for');
 	}
 
 	/**
@@ -535,7 +571,7 @@ class CSSPEG extends PEG
 	public static function ruleSTRING()
 	{
 		static $o = null;
-		return $o !== null ? $o : self::defString();
+		return $o !== null ? $o : $o = self::defString();
 	}
 
 	/**
@@ -546,7 +582,7 @@ class CSSPEG extends PEG
 	public static function ruleIDENT()
 	{
 		static $o = null;
-		return $o !== null ? $o : self::defIdent();
+		return $o !== null ? $o : $o = self::defIdent();
 	}
 
 	/**
@@ -557,7 +593,7 @@ class CSSPEG extends PEG
 	public static function ruleNTH()
 	{
 		static $o = null;
-		return $o !== null ? $o : self::defNth();
+		return $o !== null ? $o : $o = self::defNth();
 	}
 
 	/**
@@ -568,12 +604,7 @@ class CSSPEG extends PEG
 	public static function ruleHEX()
 	{
 		static $o = null;
-		return $o !== null ? $o : self::join(
-			self::seq(
-				'#',
-				self::defHexcolor()
-			)
-		);
+		return $o !== null ? $o : $o = self::join(self::defHexcolor());
 	}
 
 	/**
@@ -584,11 +615,9 @@ class CSSPEG extends PEG
 	public static function ruleIDSEL()
 	{
 		static $o = null;
-		return $o !== null ? $o : self::join(
-			self::seq(
-				'#',
-				self::defIdent()
-			)
+		return $o !== null ? $o : $o = self::seq(
+			'#',
+			self::defIdent()
 		);
 	}
 
@@ -600,7 +629,7 @@ class CSSPEG extends PEG
 	public static function ruleIMPORT_SYM()
 	{
 		static $o = null;
-		return $o !== null ? $o : self::token('@import');
+		return $o !== null ? $o : $o = self::token('@import');
 	}
 
 	/**
@@ -611,7 +640,7 @@ class CSSPEG extends PEG
 	public static function rulePAGE_SYM()
 	{
 		static $o = null;
-		return $o !== null ? $o : self::token('@page');
+		return $o !== null ? $o : $o = self::token('@page');
 	}
 
 	/**
@@ -622,7 +651,7 @@ class CSSPEG extends PEG
 	public static function ruleMEDIA_SYM()
 	{
 		static $o = null;
-		return $o !== null ? $o : self::token('@media');
+		return $o !== null ? $o : $o = self::token('@media');
 	}
 
 	/**
@@ -633,7 +662,7 @@ class CSSPEG extends PEG
 	public static function ruleFONT_FACE_SYM()
 	{
 		static $o = null;
-		return $o !== null ? $o : self::token('@font-face');
+		return $o !== null ? $o : $o = self::token('@font-face');
 	}
 
 	/**
@@ -644,7 +673,7 @@ class CSSPEG extends PEG
 	public static function ruleCHARSET_SYM()
 	{
 		static $o = null;
-		return $o !== null ? $o : self::token('@charset');
+		return $o !== null ? $o : $o = self::token('@charset');
 	}
 
 	/**
@@ -655,7 +684,7 @@ class CSSPEG extends PEG
 	public static function ruleNAMESPACE_SYM()
 	{
 		static $o = null;
-		return $o !== null ? $o : self::token('@namespace');
+		return $o !== null ? $o : $o = self::token('@namespace');
 	}
 
 	/**
@@ -666,7 +695,7 @@ class CSSPEG extends PEG
 	public static function ruleATKEYWORD()
 	{
 		static $o = null;
-		return $o !== null ? $o : self::join(
+		return $o !== null ? $o : $o = self::join(
 			self::seq(
 				'@',
 				self::defIdent()
@@ -682,10 +711,10 @@ class CSSPEG extends PEG
 	public static function ruleIMPORTANT_SYM()
 	{
 		static $o = null;
-		return $o !== null ? $o : self::join(
+		return $o !== null ? $o : $o = self::join(
 			self::seq(
 				'!',
-				self::defW(),
+				self::many(self::choice(self::defWhiteSpace(), self::ruleComment())),
 				'important'
 			)
 		);
@@ -716,31 +745,72 @@ class CSSPEG extends PEG
 	public static function ruleUnit()
 	{
 		static $o = null;
-		return $o !== null ? $o : self::join(
-			self::seq(
-				self::defNum(),
-				self::choice(
-					'kHz',
-					'Hz',
-					's',
-					'ms',
-					'turn',
-					'grad',
-					'rad',
-					'deg',
-					'pc',
-					'pt',
-					'in',
-					'mm',
-					'cm',
-					'px',
-					'ex',
-					'__qem',
-					'rem',
-					'em'
+		if ($o === null) {
+			$units = array(
+				// array('<key>', <returnValue>)
+				array('px',    self::V_PX),
+				array('em',    self::V_EMS),
+				array('kHz',   self::V_KHZ),
+				array('Hz',    self::V_HZ),
+				array('s',     self::V_S),
+				array('ms',    self::V_MS),
+				array('turn',  self::V_TURN),
+				array('grad',  self::V_GRAD),
+				array('rad',   self::V_RAD),
+				array('deg',   self::V_DEG),
+				array('pc',    self::V_PC),
+				array('pt',    self::V_PT),
+				array('in',    self::V_IN),
+				array('mm',    self::V_MM),
+				array('cm',    self::V_CM),
+				array('ex',    self::V_EXS),
+				array('rem',   self::V_REMS),
+				array('__qem', self::V_QEM)
+			);
+			$V_PERCENTAGE = self::V_PERCENTAGE;
+			$V_NUMBER = self::V_NUMBER;
+			$V_DIMENSION = self::V_DIMENSION;
+			$unitParser = self::memo(self::parserOf(function (PEG_IContext $c) use($units) {
+				$offset = $c->tell();
+				foreach ($units as $unit) {
+					$r = PEG::token($unit[0], false)->parse($c);
+					if ($r instanceof PEG_Failure) {
+						$c->seek($offset);
+					} else {
+						$r = is_array($r) ? join('', $r) : $r;
+						return array($r , $unit[1]);
+					}
+				}
+				return PEG::failure();
+			}));
+
+			$o = self::memo(
+				self::hook(
+					function ($r) {
+						if (!array_key_exists(2, $r)) $r[2] = false;
+						else $r[2] = $r[1] . $r[2];
+						if (!array_key_exists(3, $r)) $r[3] = false;
+						if (!array_key_exists(4, $r)) $r[4] = false;
+						return $r;
+					},
+					self::flatten(
+						self::seq(
+							self::optional(CSSPEG::choice('+', '-')),
+							self::choice(
+								self::seq(self::defNum(), $unitParser),
+								self::hook(function ($r) use ($V_PERCENTAGE) {return array($r[0], join('', $r[1]), $V_PERCENTAGE);}, self::rulePERCENTAGE()),
+								self::hook(function ($r) use ($V_DIMENSION) {return array($r[0], $r[1], $V_DIMENSION);}, self::ruleDIMEN()),
+								self::hook(function ($r) use ($V_NUMBER) {return array($r, '', $V_NUMBER);}, self::ruleFLOATTOKEN()),
+								self::hook(function ($r) use ($V_NUMBER) {return array($r, '', $V_NUMBER);}, self::ruleINTEGER())
+							)
+						)
+					)
 				)
-			)
-		);
+			);
+		}
+
+
+		return $o;
 	}
 
 	/**
@@ -751,11 +821,9 @@ class CSSPEG extends PEG
 	public static function ruleDIMEN()
 	{
 		static $o = null;
-		return $o !== null ? $o : self::join(
-			self::seq(
-				self::defNum(),
-				self::defIdent()
-			)
+		return $o !== null ? $o : $o = self::seq(
+			self::defNum(),
+			self::defIdent()
 		);
 	}
 
@@ -767,11 +835,9 @@ class CSSPEG extends PEG
 	public static function rulePERCENTAGE()
 	{
 		static $o = null;
-		return $o !== null ? $o : self::join(
-			self::seq(
-				self::defNum(),
-				self::many1('%')
-			)
+		return $o !== null ? $o : $o = self::seq(
+			self::defNum(),
+			self::many1('%')
 		);
 	}
 
@@ -783,7 +849,7 @@ class CSSPEG extends PEG
 	public static function ruleINTEGER()
 	{
 		static $o = null;
-		return $o !== null ? $o : self::defIntnum();
+		return $o !== null ? $o : $o = self::defIntnum();
 	}
 
 	/**
@@ -794,7 +860,7 @@ class CSSPEG extends PEG
 	public static function ruleFLOATTOKEN()
 	{
 		static $o = null;
-		return $o !== null ? $o : self::defNum();
+		return $o !== null ? $o : $o = self::defNum();
 	}
 
 	/**
@@ -805,7 +871,7 @@ class CSSPEG extends PEG
 	public static function ruleNOTFUNCTION()
 	{
 		static $o = null;
-		return $o !== null ? $o : self::token('not(');
+		return $o !== null ? $o : $o = self::token('not(');
 	}
 
 	/**
@@ -817,25 +883,11 @@ class CSSPEG extends PEG
 	public static function ruleURI()
 	{
 		static $o = null;
-		return $o !== null ? $o : self::choice(
-			self::join(
-				self::seq(
-					'url(',
-					self::drop(self::defW()),
-					self::defUrl(),
-					self::drop(self::defW()),
-					')'
-				)
-			),
-			self::join(
-				self::seq(
-					'url(',
-					self::drop(self::defW()),
-					self::ruleSTRING(),
-					self::drop(self::defW()),
-					')'
-				)
-			)
+		return $o !== null ? $o : $o = self::seq(
+			'url',
+			self::drop('(', self::defW()),
+			self::choice(self::ruleSTRING(), self::defUrl()),
+			self::drop(self::defW(), ')')
 		);
 	}
 
@@ -848,11 +900,9 @@ class CSSPEG extends PEG
 	public static function ruleFUNCTION()
 	{
 		static $o = null;
-		return $o !== null ? $o : self::join(
-			self::seq(
-				self::defIdent(),
-				'('
-			)
+		return $o !== null ? $o : $o = self::seq(
+			self::defIdent(),
+			'('
 		);
 	}
 
@@ -865,7 +915,7 @@ class CSSPEG extends PEG
 	public static function ruleUNICODERANGE()
 	{
 		static $o = null;
-		return $o !== null ? $o : self::choice(
+		return $o !== null ? $o : $o = self::choice(
 			self::join(
 				self::seq(
 					'U+',
@@ -901,7 +951,7 @@ class CSSPEG extends PEG
 	public static function ruleComment()
 	{
 		static $o = null;
-		return $o !== null ? $o : self::seq(
+		return $o !== null ? $o : $o = self::seq(
 			'/*',
 			self::many(self::tail(self::not('*/'), self::anything())),
 			self::choice('*/', self::eos())
@@ -916,7 +966,7 @@ class CSSPEG extends PEG
 	public static function ruleSpace()
 	{
 		static $o = null;
-		return $o !== null ? $o : self::choice(
+		return $o !== null ? $o : $o = self::choice(
 			self::ruleWHITESPACE(),
 			self::ruleComment()
 		);
@@ -933,7 +983,7 @@ class CSSPEG extends PEG
 	public static function synComment()
 	{
 		static $o = null;
-		return $o !== null ? $o : self::ruleComment();
+		return $o !== null ? $o : $o = self::ruleComment();
 	}
 
 	/**
@@ -944,7 +994,7 @@ class CSSPEG extends PEG
 	public static function synSpace()
 	{
 		static $o = null;
-		return $o !== null ? $o : self::many1(self::ruleSpace());
+		return $o !== null ? $o : $o = self::many1(self::ruleSpace());
 	}
 
 	/**
@@ -955,23 +1005,112 @@ class CSSPEG extends PEG
 	public static function synMaybeSpace()
 	{
 		static $o = null;
-		return $o !== null ? $o : self::many(self::ruleSpace());
+		return $o !== null ? $o : $o = self::many(self::ruleSpace());
 	}
 
+	/**
+	 * operator
+	 *   : '/' S* | ',' S* | /* empty *
+	 *   ;
+	 *
+	 * @return PEG_IParser
+	 */
+	public static function synOperator()
+	{
+		static $o = null;
+		return $o !== null ? $o : $o = self::choice('/', ',');
+	}
 
 	/**
 	 * expr
+	 *   : term [ operator term ]*
+	 *   ;
+	 *
+	 * term
+	 *   : unary_operator?
+	 *     [ NUMBER S* | PERCENTAGE S* | LENGTH S* | EMS S* | EXS S* | ANGLE S* |
+	 *       TIME S* | FREQ S* | function ]
+	 *   | STRING S* | IDENT S* | URI S* | UNICODERANGE S* | hexcolor
+	 *   ;
+	 *
 	 *
 	 * @return PEG_IParser
 	 */
 	public static function synExpr()
 	{
 		static $o = null;
-		return $o !== null ? $o : self::choice(
-			self::ruleUnit(),
-			self::rulePERCENTAGE(),
-			self::ruleINTEGER()
-		);
+		if ($o === null) {
+			$func = self::seq(
+				self::first(self::ruleFUNCTION()),
+				self::drop(self::synMaybeSpace()),
+				self::ref($o),
+				self::drop(self::synMaybeSpace()),
+				self::drop(')')
+			);
+			$V_STRING = self::V_STRING;
+			$V_IDENT = self::V_IDENT;
+			$V_FUNCTION = self::V_FUNCTION;
+			$V_URI = self::V_URI;
+			$V_PARSER_HEXCOLOR = self::V_PARSER_HEXCOLOR;
+			$V_UNKNOWN = self::V_UNKNOWN;
+			$term = new CSSParser_NodeCreater(
+				'expr',
+				self::hook(
+					function ($r) {
+						if (!array_key_exists(3, $r)) $r[3] = false;
+						return $r;
+					},
+					self::choice(
+						self::ruleUnit(),
+						self::hook(function ($r) use($V_PARSER_HEXCOLOR) {return array(false, $r, $r, $V_PARSER_HEXCOLOR, false);}, self::ruleHEX()),
+						self::hook(
+							function ($r) use($V_URI) {
+								$args = $r[1];
+								return array(false, $args, 'url(' . $args . ')', $V_URI, false);
+							},
+							self::ruleURI()
+						),
+						self::hook(
+							function ($r) use($V_FUNCTION) {
+								$name = $r[0];
+								$args = $r[1];
+								$argsToString = array();
+								foreach ($args as $node) {
+									switch ($node->getType()) {
+										case 'expr':
+											$argsToString[] = $node->at('parsed');
+										break;
+										default:
+											$argsToString[] = $node->getData();
+										break;
+									}
+								}
+								$parsed = $name . '(' . join('', $argsToString) . ')';
+								return array(false, null, $parsed, $V_FUNCTION, array('name' => $name, 'args' => $args));
+							},
+							$func
+						),
+						// TODO
+						//self::ruleUNICODERANGE()
+						self::hook(function ($r) use($V_STRING) {return array(false, $r, $r, $V_STRING, false);}, self::ruleSTRING()),
+						self::hook(function ($r) use($V_IDENT) {return array(false, $r, $r, $V_IDENT, false);}, self::ruleIDENT()),
+						self::hook(
+							function ($r) use($V_UNKNOWN) {return array(false, $r, $r, $V_UNKNOWN, false);},
+							self::join(self::many1(self::choice(self::join(self::ruleIDSEL()), '#', '%')))
+						)
+					)
+				),
+				array('operator', 'value', 'parsed', 'unit', 'function')
+			);
+			$o = self::choice(
+				self::flatten($term, self::drop(self::synSpace()), self::ref($deep)),
+				self::flatten($term, self::drop(self::synMaybeSpace()), new CSSParser_NodeCreater('combinator', self::choice(',', '/')), self::drop(self::synMaybeSpace()), self::ref($deep)),
+				self::first(self::seq($term), self::synSpace()),
+				self::seq($term)
+			);
+			$deep = self::memo(self::choice($o, $term));
+		}
+		return $o;
 	}
 
 	/**
@@ -987,7 +1126,35 @@ class CSSPEG extends PEG
 				self::synComment(),
 				self::ref($block),
 				self::hook(
-					create_function('$r', 'return $r === false ? CSSPEG::failure() : $r;'),
+					create_function('$r', 'return $r === false ? PEG::failure() : $r;'),
+					self::char('}', true)
+				)
+			);
+			$block = self::seq(
+				'{',
+				self::many($blockRef),
+				self::choice('}', self::eos())
+			);
+			$o = $blockRef;
+		}
+
+		return $o;
+	}
+
+	/**
+	 * UnknownBlockRef
+	 *
+	 * @return PEG_IParser
+	 */
+	public static function synErrorBlock()
+	{
+		static $o = null;
+		if ($o === null) {
+			$blockRef = self::choice(
+				self::synComment(),
+				self::ref($block),
+				self::hook(
+					create_function('$r', 'return $r === false ? PEG::failure() : $r;'),
 					self::char('}', true)
 				)
 			);
@@ -996,10 +1163,12 @@ class CSSPEG extends PEG
 				self::many($blockRef),
 				'}'
 			);
+			$o = $blockRef;
 		}
 
-		return $blockRef;
+		return $o;
 	}
+
 
 	/**
 	 * MediaQuery
@@ -1010,44 +1179,8 @@ class CSSPEG extends PEG
 	{
 		static $o = null;
 		if ($o === null) {
-			$comment = self::synComment();
 			$space = self::synSpace();
 			$maybeSpace = self::synMaybeSpace();
-			// http://www.w3.org/TR/css3-syntax/#error-handling
-			//   while observing the rules for matching pairs of
-			//   (), [], {}, "", and '', and correctly handling escapes
-			$errorBlock = self::choice(
-				self::seq('"', self::many(self::choice('\"', self::char('"', true))), '"'),
-				self::seq("'", self::many(self::choice("\'", self::char("'", true))), "'"),
-				self::seq('{', self::many(self::choice('\}', '\{', self::char('{}', true))), '}'),
-				self::seq('(', self::many(self::choice('\)', self::char(')', true))), ')'),
-				self::seq('[', self::many(self::choice('\]', self::char(']', true))), ']')
-			);
-
-			$errorTokenBlock = self::seq(
-				'{',
-				self::seq(
-					self::optional(self::many(self::char('{}', true))),
-					self::optional(self::ref($errorBrace)),
-					self::optional(self::many(self::char('{}', true)))
-				),
-				'}'
-			);
-			$errorBrace = self::choice(
-				$comment,
-				$errorBlock,
-				'\;',
-				'\{',
-				'\}',
-				self::many1(self::char(';{', true)),
-				$errorTokenBlock,
-				self::eos()
-			);
-
-			$errorToken = self::choice(
-				self::amp(';'),
-				$errorBrace
-			);
 
 			$restrictor = self::optional(
 				new CSSParser_NodeCreater(
@@ -1090,54 +1223,16 @@ class CSSPEG extends PEG
 				self::ruleIDENT()
 			);
 
-			$andQuery = self::choice(
-				self::hook(
-					create_function(
-						'Array $arr',
-						'
-						$result = array();
-						if (empty($arr[0])
-							&& $arr[1] instanceof CSSParser_Node
-							&& $arr[1]->getData() === ";"
-						) return array();
-						if (empty($arr[0])
-							&& $arr[1] === false
-						) return CSSPEG::failure();
-
-						if (!empty($arr[0])) $result = $arr[0];
-						if (!empty($arr[1])) $result[] = $arr[1];
-						return $result;
-						'
-					),
-					self::seq(
-						self::many(
-							self::third(
-								self::ruleMEDIA_AND(),
-								$space,
-								$exp,
-								$maybeSpace
-							)
-						),
-						self::optional(
-							new CSSParser_NodeCreater(
-								'unknown',
-								self::andalso(
-									self::not(self::eos()),
-									self::join(self::seq($errorToken))
-								)
-							)
-						)
+			$andQuery = self::first(
+				self::many(
+					self::third(
+						self::ruleMEDIA_AND(),
+						$space,
+						$exp,
+						$maybeSpace
 					)
 				),
-				self::seq(
-					new CSSParser_NodeCreater(
-						'unknown',
-						self::andalso(
-							self::not(self::eos()),
-							self::join(self::many(self::anything()))
-						)
-					)
-				)
+				self::drop(self::choice(self::amp(';'), self::amp(self::eos())))
 			);
 
 			$mediaQuery = self::choice(
@@ -1161,7 +1256,7 @@ class CSSPEG extends PEG
 				),
 				new CSSParser_NodeCreater(
 					'unknown',
-					self::join(self::seq($errorToken))
+					self::synError(self::synErrorInvalidBlock(), self::synErrorSemicolon(false))
 				)
 			);
 			$o = $mediaQuery;
@@ -1169,4 +1264,311 @@ class CSSPEG extends PEG
 		return $o;
 	}
 
+	//!{{{ selector
+
+	public static function synSelectorsGroup()
+	{
+		static $o = null;
+		if ($o === null) {
+			$o = self::memo(self::hook(
+				function ($r) {
+					$res = array();
+					$res[] = $r[0];
+					$res = array_merge($res, $r[1]);
+					return $res;
+				},
+				self::seq(
+					self::synSelector(),
+					self::many(self::third(
+						',',
+						self::synMaybeSpace(),
+						self::synSelector()
+					))
+			)));
+		}
+
+		return $o;
+	}
+
+	public static function synSelector()
+	{
+		static $o = null;
+		if ($o === null) {
+			// mix commnet('/**/') and space(' ') -> return only one space
+			// text : '/**/ /**/ /**/ ' -> retrun : ' '
+			$space = self::memo(self::first(self::many1(self::second(
+				self::many(self::ruleComment()),
+				self::first(self::ruleWHITESPACE()),
+				self::many(self::ruleComment())
+			))));
+			$o = self::memo(self::choice(
+				self::flatten(self::synSimpleSelector(), new CSSParser_NodeCreater('combinator', $space, array('value')), self::ref($deep)),
+				self::flatten(self::synSimpleSelector(), self::drop(self::synMaybeSpace()), self::synCombinator(), self::ref($deep)),
+				self::first(self::synSimpleSelector(), self::ruleSpace()),
+				self::synSimpleSelector()
+			));
+			$deep = self::memo(self::choice($o, self::synSimpleSelector()));
+		}
+		return $o;
+	}
+
+	public static function synCombinator()
+	{
+		static $o = null;
+		return $o !== null ? $o : $o = new CSSParser_NodeCreater(
+			'combinator',
+			self::first(self::choice('+', '~', '>'), self::synMaybeSpace()),
+			array('value')
+		);
+	}
+
+	/**
+	 * @return Array | PEG_Failure
+	 */
+	public static function synSimpleSelector()
+	{
+		static $o = null;
+		return $o !== null ? $o : $o = self::choice(
+			self::flatten(self::seq(
+				self::choice(self::synUniversal(), self::synType()),
+				self::synSpecifier()
+			)),
+			self::seq(self::choice(self::synUniversal(), self::synType())),
+			self::synSpecifier()
+		);
+	}
+
+	public static function synUniversal()
+	{
+		static $o = null;
+		return $o !== null ? $o : $o = new CSSParser_NodeCreater(
+			'universal',
+			self::token('*'),
+			array('value')
+		);
+	}
+
+	public static function synType()
+	{
+		static $o = null;
+		return $o !== null ? $o : $o = new CSSParser_NodeCreater(
+			'type',
+			self::seq(self::ruleIDENT()),
+			array('value')
+		);
+	}
+
+	public static function synSpecifier()
+	{
+		static $o = null;
+		return $o !== null ? $o : $o = self::many1(self::choice(
+			self::synId(),
+			self::synClass(),
+			self::synAttribute(),
+			self::synPseudo()
+		));
+	}
+
+	public static function synId()
+	{
+		static $o = null;
+		return $o !== null ? $o : $o = new CSSParser_NodeCreater(
+			'id',
+			self::hook(function (Array $r) {return array($r[1]);}, self::ruleIDSEL()),
+			array('value')
+		);
+	}
+
+	public static function synClass()
+	{
+		static $o = null;
+		return $o !== null ? $o : $o = new CSSParser_NodeCreater(
+			'class',
+			self::seq(self::drop('.'), self::ruleIDENT()),
+			array('value')
+		);
+	}
+
+	public static function synAttrName()
+	{
+		static $o = null;
+		return $o !== null ? $o : $o = self::first(
+			self::ruleIDENT(),
+			self::synMaybeSpace()
+		);
+	}
+
+	public static function synMatch()
+	{
+		static $o = null;
+		return $o !== null ? $o : $o = self::choice(
+			'=', '~=', '|=', '^=', '$=', '*='
+		);
+	}
+
+	/**
+	 * [title]
+	 * array(
+	 *   'value' => 'title',
+	 *   'match' => ']',
+	 *   'attribute' => null
+	 * )
+	 *
+	 * [href^="https"]
+	 * array(
+	 *   'value' => 'href',
+	 *   'match' => '^=',
+	 *   'attribute' => '"https"'
+	 * )
+	 *
+	 * @return PEG_IParser
+	 */
+	public static function synAttribute()
+	{
+		static $o = null;
+		return $o !== null ? $o : $o = new CSSParser_NodeCreater(
+			'attribute',
+			self::hook(
+				function (Array $r) {
+					if (count($r) === 2) $r[] = null;
+					return $r;
+				},
+				self::choice(
+					self::seq(self::drop('[', self::synMaybeSpace()), self::synAttrName(), ']'),
+					self::seq(self::drop('[', self::synMaybeSpace()), self::synAttrName(), self::synMatch(), self::drop(self::synMaybeSpace()), self::choice(self::ruleIDENT(), self::ruleSTRING()), self::drop(self::synMaybeSpace(), ']'))
+					//TODO namespace selector
+				)
+			),
+			array('value', 'match', 'attribute')
+		);
+	}
+
+	public static function synPseudo()
+	{
+		static $o = null;
+		return $o !== null ? $o : $o = new CSSParser_NodeCreater(
+			'pseudo',
+			self::choice(
+				self::synPseudoClass(),
+				self::synPseudoElement()
+				// TODO function
+			),
+			array('type', 'value')
+		);
+	}
+
+	public static function synPseudoClass()
+	{
+		static $o = null;
+		return $o !== null ? $o : $o = self::seq(
+			':',
+			self::ruleIDENT()
+			/*
+			self::choice(
+				'root', 'first-child', 'last-child', 'first-of-type',
+				'last-of-type', 'only-child', 'only-of-type', 'empty', 'link',
+				'visited', 'active', 'hover', 'focus', 'target',
+				'enabled', 'disabled', 'checked'
+			)
+			*/
+		);
+	}
+
+	public static function synPseudoElement()
+	{
+		static $o = null;
+		return $o !== null ? $o : $o = self::seq(
+			'::',
+			self::ruleIDENT()
+			/*
+			self::choice('before', 'after', 'first-letter', 'first-line')
+			*/
+		);
+	}
+
+	//!}}} selector
+
+	public static function synValue()
+	{
+		static $o = null;
+		return $o !== null ? $o : $o = self::first(self::synExpr());
+	}
+
+	public static function synImportant()
+	{
+		static $o = null;
+		return $o !== null ? $o : $o = self::first(self::ruleIMPORTANT_SYM(), self::synMaybeSpace());
+	}
+
+	public static function synAtRulePage()
+	{
+		static $o = null;
+		if ($o === null) {
+			//FIXME
+		}
+		return $o;
+	}
+
+	public static function synError(){
+		return new CSSParser_Error(self::asParserArray(func_get_args()));
+	}
+
+	public static function synErrorSemicolon($includingSemicolon = true)
+	{
+		static $obj = null, $objNot = null;
+		if ($includingSemicolon) {
+			return $obj !== null ? $obj : $obj = self::_synErrorSemicolon($includingSemicolon);
+		} else {
+			return $objNot !== null ? $objNot : $objNot = self::_synErrorSemicolon($includingSemicolon);
+		}
+	}
+
+	protected static function _synErrorSemicolon($includingSemicolon = true)
+	{
+		return self::join(
+			self::seq(
+				self::many1(CSSPEG::choice(
+					self::ruleSTRING(), self::synInvalidBlock(), self::token('\{'), self::char(';', true))
+				),
+				$includingSemicolon === true ? ';' : ''
+			)
+		);
+	}
+
+	public static function synErrorInvalidBlock()
+	{
+		static $o = null;
+		return $o !== null ? $o : $o = self::join(
+			CSSPEG::seq(
+				CSSPEG::many(CSSPEG::choice(CSSPEG::ruleSTRING(), CSSPEG::token('\{'), CSSPEG::char('{', true))),
+				CSSPEG::synInvalidBlock()
+			)
+		);
+	}
+
+	public static function synInvalidBlock()
+	{
+		static $o = null;
+		if ($o === null) {
+			$blockRef = self::choice(
+				self::synComment(),
+				self::ruleSTRING(),
+				self::token('\}'),
+				self::ref($block),
+				self::char('}', true)
+			);
+			$block = self::seq(
+				'{',
+				self::many($blockRef),
+				self::choice('}', self::eos())
+			);
+			$o = $block;
+		}
+
+		return $o;
+	}
+
 }
+
+
+

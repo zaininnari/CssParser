@@ -12,6 +12,7 @@ require_once dirname(__FILE__) . '/CSSParser/RuleSet.php';
 require_once dirname(__FILE__) . '/CSSParser/AtRule.php';
 require_once dirname(__FILE__) . '/CSSParser/FontFace.php';
 require_once dirname(__FILE__) . '/CSSParser/Page.php';
+require_once dirname(__FILE__) . '/CSSParser/Error.php';
 
 require_once dirname(__FILE__) . '/CSSParser/IValidate.php';
 require_once dirname(__FILE__) . '/CSSParser/AValidate.php';
@@ -44,12 +45,12 @@ class CSSParser
 	 *
 	 * @return CSSParser_Node
 	 */
-	static function validate($css, $type = null)
+	/*static function validate($css, $type = null)
 	{
 		$node = self::parse($css);
 		$validator = self::factory($type);
 		return $validator->validate($node);
-	}
+	}*/
 
 	/**
 	 * 指定した種類のインスタンスを返す。
