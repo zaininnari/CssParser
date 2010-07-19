@@ -1472,35 +1472,11 @@ class CSSPEG extends PEG
 		static $o = null;
 		return $o !== null ? $o : $o = new CSSParser_NodeCreater(
 			'pseudo',
-			self::hook(
-				function (Array $r) {
-					if (!array_key_exists(2, $r)) $r[2] = null;
-					if (!array_key_exists(3, $r)) $r[3] = true;
-					elseif (isset($r[2][0]) && $r[2][0] instanceof CSSParser_Node && $r[2][0]->at('valid') === false) $r[3] = false;
-					return $r;
-				},
-				self::choice(
-					self::hook(
-						function (Array $r) {
-							if (count($r[2]) !== 1) {
-								$r[3] = false;
-							} elseif (isset($r[2][0])) {
-								$node = $r[2][0];
-								if ($node instanceof CSSParser_Node
-									&& $node->getType() === 'pseudo'
-									&& ($node->at('type') === '::' || $node->at('value') === 'not')
-								) {
-									$r[3] = false;
-								}
-							}
-							return $r;
-						},
-						self::synPseudoNot()
-					),
-					self::synPseudoEth(),
-					self::synPseudoClass(),
-					self::synPseudoElement()
-				)
+			self::choice(
+				self::synPseudoNot(),
+				self::synPseudoEth(),
+				self::synPseudoClass(),
+				self::synPseudoElement()
 			),
 			array('type', 'value', 'function', 'valid')
 		);
@@ -1509,18 +1485,21 @@ class CSSPEG extends PEG
 	public static function synPseudoClass()
 	{
 		static $o = null;
-		return $o !== null ? $o : $o = self::choice(
+		return $o !== null ? $o : $o = self::flatten(
 			self::seq(
 				':',
-				self::ruleIDENT()
-				/*
 				self::choice(
-					'root', 'first-child', 'last-child', 'first-of-type',
-					'last-of-type', 'only-child', 'only-of-type', 'empty', 'link',
-					'visited', 'active', 'hover', 'focus', 'target',
-					'enabled', 'disabled', 'checked'
+					self::hook(
+						function ($r) {return array($r , null, true);},
+						self::choice(
+							'root', 'first-child', 'last-child', 'first-of-type',
+							'last-of-type', 'only-child', 'only-of-type', 'empty', 'link',
+							'visited', 'active', 'hover', 'focus', 'target',
+							'enabled', 'disabled', 'checked'
+						)
+					),
+					self::hook(function ($r) {return array($r , null, false);}, self::ruleIDENT())
 				)
-				*/
 			)
 		);
 	}
@@ -1528,12 +1507,17 @@ class CSSPEG extends PEG
 	public static function synPseudoElement()
 	{
 		static $o = null;
-		return $o !== null ? $o : $o = self::seq(
-			'::',
-			self::ruleIDENT()
-			/*
-			self::choice('before', 'after', 'first-letter', 'first-line')
-			*/
+		return $o !== null ? $o : $o = self::flatten(
+			self::seq(
+				'::',
+				self::choice(
+					self::hook(
+						function ($r) {return array($r , null, true);},
+						self::choice('before', 'after', 'first-letter', 'first-line')
+					),
+					self::hook(function ($r) {return array($r , null, false);}, self::ruleIDENT())
+				)
+			)
 		);
 	}
 
@@ -1541,12 +1525,30 @@ class CSSPEG extends PEG
 	{
 		static $o = null;
 		if ($o === null) {
-			$o = self::seq(
+			$parser = self::seq(
 				':',
 				self::token('not', false),
 				self::drop('(', self::synMaybeSpace()),
 				self::ref($simpleSelector),
 				self::drop(self::synMaybeSpace(), ')')
+			);
+			$o = self::hook(
+				function (Array $r) {
+					if (count($r[2]) !== 1) {
+						$r[3] = false;
+					} elseif (isset($r[2][0])) {
+						$node = $r[2][0];
+						if ($node instanceof CSSParser_Node
+							&& $node->getType() === 'pseudo'
+							&& ($node->at('type') === '::' || $node->at('value') === 'not')
+						) {
+							$r[3] = false;
+						}
+					}
+					if (!array_key_exists(3, $r)) $r[3] = true;
+					return $r;
+				},
+				$parser
 			);
 			$simpleSelector = self::synSimpleSelector();
 		}
@@ -1556,16 +1558,44 @@ class CSSPEG extends PEG
 	public static function synPseudoEth()
 	{
 		static $o = null;
-		return $o !== null ? $o : $o = self::seq(
-			':',
-			self::first(self::ruleFUNCTION()),
-			self::drop(self::synMaybeSpace()),
-			self::choice(
-				self::ruleNTH(), // 2n+1
-				self::join(self::seq(self::optional(self::choice('+', '-')), self::ruleINTEGER())), //+1
-				self::ruleIDENT() // odd even
-			),
-			self::drop(self::synMaybeSpace(), ')')
+		return $o !== null ? $o : $o = self::flatten(
+			self::seq(
+				':',
+				self::choice(
+					// :nth-*()
+					self::hook(
+						function (Array $r) {return array($r[0], $r[1], true);},
+						self::seq(
+							self::choice('nth-child', 'nth-last-child', 'nth-of-type', 'nth-last-of-type'),
+							self::drop('(', self::synMaybeSpace()),
+							self::choice(
+								self::ruleNTH(), // 2n+1
+								self::join(self::seq(self::optional(self::choice('+', '-')), self::ruleINTEGER())), //+1
+								self::choice('odd', 'even')
+							)
+						)
+					),
+					// :lang()
+					self::hook(
+						function (Array $r) {return array($r[0], $r[1], true);},
+						self::seq(
+							'lang',
+							self::drop('(', self::synMaybeSpace()),
+							self::ruleIDENT()
+						)
+					),
+					// :FUNCTION()
+					self::hook(
+						function (Array $r) {return array($r[0], $r[1], false);},
+						self::seq(
+							self::first(self::ruleFUNCTION()),
+							self::drop(self::synMaybeSpace()),
+							self::ruleIDENT()
+						)
+					)
+				),
+				self::drop(self::synMaybeSpace(), ')')
+			)
 		);
 	}
 
