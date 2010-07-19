@@ -472,17 +472,20 @@ class CSSPEG extends PEG
 		static $o = null;
 		return $o !== null ? $o : $o = self::join(
 			self::seq(
-				self::optional('+', '-'),
+				self::optional(self::choice('+', '-')),
 				self::many(
 					self::defIntnum()
 				),
 				'n',
+				self::drop(self::synMaybeSpace()),
 				self::optional(
 					self::seq(
 						self::choice('+', '-'),
+						self::drop(self::synMaybeSpace()),
 						self::defIntnum()
 					)
-				)
+				),
+				self::drop(self::synMaybeSpace())
 			)
 		);
 	}
@@ -1169,7 +1172,6 @@ class CSSPEG extends PEG
 		return $o;
 	}
 
-
 	/**
 	 * MediaQuery
 	 *
@@ -1331,10 +1333,10 @@ class CSSPEG extends PEG
 		return $o !== null ? $o : $o = self::choice(
 			self::flatten(self::seq(
 				self::choice(self::synUniversal(), self::synType()),
-				self::synSpecifier()
+				self::synSpecifierGroup()
 			)),
 			self::seq(self::choice(self::synUniversal(), self::synType())),
-			self::synSpecifier()
+			self::synSpecifierGroup()
 		);
 	}
 
@@ -1358,15 +1360,21 @@ class CSSPEG extends PEG
 		);
 	}
 
+	public static function synSpecifierGroup()
+	{
+		static $o = null;
+		return $o !== null ? $o : $o = self::many1(self::synSpecifier());
+	}
+
 	public static function synSpecifier()
 	{
 		static $o = null;
-		return $o !== null ? $o : $o = self::many1(self::choice(
+		return $o !== null ? $o : $o = self::choice(
 			self::synId(),
 			self::synClass(),
 			self::synAttribute(),
 			self::synPseudo()
-		));
+		);
 	}
 
 	public static function synId()
@@ -1443,34 +1451,77 @@ class CSSPEG extends PEG
 		);
 	}
 
+	/**
+	 * CSSParser_Node::getData()
+	 *
+	 * array(
+	 * 	'type' => 'pseudo',
+	 * 	'value' => '<string>',
+	 * 	'function' => <array> | <null>,
+	 * 	'valid' => <boolean>
+	 * )
+	 *
+	 * - 'valid' : false
+	 *             unknown pseudo-class or pseudo-element,
+	 *             limitation of negation pseudo-class : 「:not()」 nest, pseudo-elements, multi simple selectors
+	 *
+	 * @return PEG_IParser
+	 */
 	public static function synPseudo()
 	{
 		static $o = null;
 		return $o !== null ? $o : $o = new CSSParser_NodeCreater(
 			'pseudo',
-			self::choice(
-				self::synPseudoClass(),
-				self::synPseudoElement()
-				// TODO function
+			self::hook(
+				function (Array $r) {
+					if (!array_key_exists(2, $r)) $r[2] = null;
+					if (!array_key_exists(3, $r)) $r[3] = true;
+					elseif (isset($r[2][0]) && $r[2][0] instanceof CSSParser_Node && $r[2][0]->at('valid') === false) $r[3] = false;
+					return $r;
+				},
+				self::choice(
+					self::hook(
+						function (Array $r) {
+							if (count($r[2]) !== 1) {
+								$r[3] = false;
+							} elseif (isset($r[2][0])) {
+								$node = $r[2][0];
+								if ($node instanceof CSSParser_Node
+									&& $node->getType() === 'pseudo'
+									&& ($node->at('type') === '::' || $node->at('value') === 'not')
+								) {
+									$r[3] = false;
+								}
+							}
+							return $r;
+						},
+						self::synPseudoNot()
+					),
+					self::synPseudoEth(),
+					self::synPseudoClass(),
+					self::synPseudoElement()
+				)
 			),
-			array('type', 'value')
+			array('type', 'value', 'function', 'valid')
 		);
 	}
 
 	public static function synPseudoClass()
 	{
 		static $o = null;
-		return $o !== null ? $o : $o = self::seq(
-			':',
-			self::ruleIDENT()
-			/*
-			self::choice(
-				'root', 'first-child', 'last-child', 'first-of-type',
-				'last-of-type', 'only-child', 'only-of-type', 'empty', 'link',
-				'visited', 'active', 'hover', 'focus', 'target',
-				'enabled', 'disabled', 'checked'
+		return $o !== null ? $o : $o = self::choice(
+			self::seq(
+				':',
+				self::ruleIDENT()
+				/*
+				self::choice(
+					'root', 'first-child', 'last-child', 'first-of-type',
+					'last-of-type', 'only-child', 'only-of-type', 'empty', 'link',
+					'visited', 'active', 'hover', 'focus', 'target',
+					'enabled', 'disabled', 'checked'
+				)
+				*/
 			)
-			*/
 		);
 	}
 
@@ -1483,6 +1534,38 @@ class CSSPEG extends PEG
 			/*
 			self::choice('before', 'after', 'first-letter', 'first-line')
 			*/
+		);
+	}
+
+	public static function synPseudoNot()
+	{
+		static $o = null;
+		if ($o === null) {
+			$o = self::seq(
+				':',
+				self::token('not', false),
+				self::drop('(', self::synMaybeSpace()),
+				self::ref($simpleSelector),
+				self::drop(self::synMaybeSpace(), ')')
+			);
+			$simpleSelector = self::synSimpleSelector();
+		}
+		return $o;
+	}
+
+	public static function synPseudoEth()
+	{
+		static $o = null;
+		return $o !== null ? $o : $o = self::seq(
+			':',
+			self::first(self::ruleFUNCTION()),
+			self::drop(self::synMaybeSpace()),
+			self::choice(
+				self::ruleNTH(), // 2n+1
+				self::join(self::seq(self::optional(self::choice('+', '-')), self::ruleINTEGER())), //+1
+				self::ruleIDENT() // odd even
+			),
+			self::drop(self::synMaybeSpace(), ')')
 		);
 	}
 

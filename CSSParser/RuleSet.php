@@ -70,7 +70,7 @@ class CSSParser_RuleSet implements PEG_IParser
 		$parser = CSSPEG::hook(
 			array($this, 'map'),
 			CSSPEG::seq(
-				new CSSParser_NodeCreater($this->type, $selectorChar),// , array('selector')
+				new CSSParser_NodeCreater($this->type, $selectorChar),
 				CSSPEG::drop('{', $ignore),
 				CSSPEG::many($declaration),
 				CSSPEG::drop(CSSPEG::choice(CSSPEG::seq('}', $ignore), CSSPEG::eos()))
