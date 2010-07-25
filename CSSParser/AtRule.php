@@ -11,14 +11,14 @@ class CSSParser_AtRule implements PEG_IParser
 	 */
 	function __construct()
 	{
-		$ignore = CSSPEG::synMaybeSpace();
+		$synMaybeSpace = CSSPEG::synMaybeSpace();
 		// 無視しないコメント
 		$displayCommnet = CSSPEG::synComment();
 
 		$charsetSuccess = CSSPEG::first(
-			CSSPEG::drop($ignore),
+			CSSPEG::drop($synMaybeSpace),
 			new CSSParser_NodeCreater('value', CSSPEG::ruleSTRING()),
-			CSSPEG::drop($ignore),
+			CSSPEG::drop($synMaybeSpace),
 			';'
 		);
 
@@ -33,7 +33,7 @@ class CSSParser_AtRule implements PEG_IParser
 
 		$mediaType = CSSPEG::synMediaQuery();
 		$importSuccess = CSSPEG::seq(
-			CSSPEG::drop($ignore),
+			CSSPEG::drop($synMaybeSpace),
 			new CSSParser_NodeCreater(
 				'value',
 				CSSPEG::choice(
@@ -42,12 +42,12 @@ class CSSParser_AtRule implements PEG_IParser
 				),
 				array('value', 'unit')
 			),
-			CSSPEG::drop($ignore),
+			CSSPEG::drop($synMaybeSpace),
 			CSSPEG::synMediaQuery(),
 			';'
 		);
 		$importError1 = CSSPEG::seq(
-			CSSPEG::drop($ignore),
+			CSSPEG::drop($synMaybeSpace),
 			new CSSParser_NodeCreater(
 				'value',
 				CSSPEG::choice(
@@ -56,7 +56,7 @@ class CSSParser_AtRule implements PEG_IParser
 				),
 				array('value', 'unit')
 			),
-			CSSPEG::drop($ignore),
+			CSSPEG::drop($synMaybeSpace),
 			CSSPEG::synMediaQuery()
 		);
 		$importError2 = CSSPEG::seq(
@@ -77,7 +77,7 @@ class CSSParser_AtRule implements PEG_IParser
 		$mediaChar = CSSPEG::join(CSSPEG::seq('@media', CSSPEG::many1(CSSPEG::choice($displayCommnet, CSSPEG::char('{;', true)))));
 		$media = CSSPEG::seq(
 			new CSSParser_NodeCreater('@media', $mediaChar),
-			CSSPEG::drop('{', $ignore),
+			CSSPEG::drop('{', $synMaybeSpace),
 			CSSPEG::choice(
 				// for nothing rules
 				CSSPEG::hook(function ($r) {return array();}, CSSPEG::amp('}')),
@@ -91,7 +91,7 @@ class CSSParser_AtRule implements PEG_IParser
 					CSSPEG::first(new CSSParser_RuleSet(), CSSPEG::amp('}'))
 				)
 			),
-			CSSPEG::drop($ignore),
+			CSSPEG::drop($synMaybeSpace),
 			CSSPEG::drop(CSSPEG::choice('}', CSSPEG::eos()))
 		);
 

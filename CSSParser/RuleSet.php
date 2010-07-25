@@ -12,7 +12,7 @@ class CSSParser_RuleSet implements PEG_IParser
 	 */
 	function __construct()
 	{
-		$ignore  = CSSPEG::synMaybeSpace();
+		$synMaybeSpace  = CSSPEG::synMaybeSpace();
 		$unknownBlockRef = CSSPEG::synUnknownBlockRef();
 
 		$property = CSSPEG::first( // プロパティ 「color:red」の「color」の部分
@@ -20,9 +20,9 @@ class CSSParser_RuleSet implements PEG_IParser
 				CSSPEG::optional(CSSPEG::choice('_', '*')), // underscore hack, asterisk hack
 				CSSPEG::ruleIDENT()
 			)),
-			CSSPEG::drop(CSSPEG::synMaybeSpace())
+			$synMaybeSpace
 		);
-		$value    = CSSPEG::first(CSSPEG::synExpr(), CSSPEG::synMaybeSpace()); // 値 「color:red」の「red」の部分
+		$value    = CSSPEG::first(CSSPEG::synExpr(), $synMaybeSpace); // 値 「color:red」の「red」の部分
 
 		$declaration = CSSPEG::choice(
 			CSSPEG::hook(
@@ -31,13 +31,13 @@ class CSSParser_RuleSet implements PEG_IParser
 				},
 				CSSPEG::seq(
 					new CSSParser_NodeCreater('property', $property),
-					CSSPEG::drop(':', $ignore),
+					CSSPEG::drop(':', $synMaybeSpace),
 					new CSSParser_NodeCreater('value', $value),
 					CSSPEG::hook(
 						function ($r) {return $r === false ? $r : true;},
 						CSSPEG::optional(CSSPEG::synImportant())
 					),
-					CSSPEG::drop(CSSPEG::choice(';', CSSPEG::amp('}'), CSSPEG::eos()), $ignore)
+					CSSPEG::drop(CSSPEG::choice(';', CSSPEG::amp('}'), CSSPEG::eos()), $synMaybeSpace)
 				)
 			),
 			new CSSParser_NodeCreater(
@@ -77,9 +77,9 @@ class CSSParser_RuleSet implements PEG_IParser
 			array($this, 'map'),
 			CSSPEG::seq(
 				new CSSParser_NodeCreater($this->type, $selectorChar),
-				CSSPEG::drop('{', $ignore),
+				CSSPEG::drop('{', $synMaybeSpace),
 				CSSPEG::many($declaration),
-				CSSPEG::drop(CSSPEG::choice(CSSPEG::seq('}', $ignore), CSSPEG::eos()))
+				CSSPEG::drop(CSSPEG::choice(CSSPEG::seq('}', $synMaybeSpace), CSSPEG::eos()))
 			)
 		);
 
