@@ -144,6 +144,7 @@ class CSSPEG extends PEG
 		static $o = null;
 		return $o !== null ? $o : $o = self::choice(
 			self::alphabet(),
+			'_',
 			self::defNonAscii(),
 			self::defEscape()
 		);
@@ -161,6 +162,7 @@ class CSSPEG extends PEG
 			self::alphabet(),
 			self::digit(),
 			'-',
+			'_',
 			self::defNonAscii(),
 			self::defEscape()
 		);
