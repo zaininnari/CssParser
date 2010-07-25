@@ -7,18 +7,18 @@ CSS parser by Parsing Expression Grammer(解析表現文法)
 @license MIT License
 
 
-
+depend liblary
 以下のライブラリに依存しています。
 
-* document ドキュメント
+* document (ドキュメント)
 
     OpenpearPEG Documentation
     http://nimpad.jp/phppeg/
 
-* source ソース
+* source (ソース)
 
       http://openpear.org/package/PEG
-* OpenpearPEG install PEGのインストール
+* OpenpearPEG install (PEGのインストール)
 
         pear channel-discover openpear.org
         pear install openpear/PEG 
@@ -29,11 +29,12 @@ TODO
 * 引用符の文字列の回避
 * IE bug:color gray bug
 
-specifications 仕様
+specifications (仕様)
 ---
 
-* unsupporte vendor prefix
-* unsupporte css hacks. cssハックは現在未対応です。
+* support vendor prefix
+* support css hacks. (cssハックは現在未対応です。)
+** only underscore hack and asterisk hack.
 * セレクタ、プロパティ、値などに含まれるコメントは無視しません。
 * 「text-decoration : underline/**/overline;」は適切な内容ですが、
    (「text-decoration : underline overline;」と解釈されます。)

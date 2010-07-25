@@ -15,7 +15,13 @@ class CSSParser_RuleSet implements PEG_IParser
 		$ignore  = CSSPEG::synMaybeSpace();
 		$unknownBlockRef = CSSPEG::synUnknownBlockRef();
 
-		$property = CSSPEG::first(CSSPEG::ruleIDENT(), CSSPEG::synMaybeSpace()); // プロパティ 「color:red」の「color」の部分
+		$property = CSSPEG::first( // プロパティ 「color:red」の「color」の部分
+			CSSPEG::join(CSSPEG::seq(
+				CSSPEG::optional(CSSPEG::choice('_', '*')), // underscore hack, asterisk hack
+				CSSPEG::ruleIDENT()
+			)),
+			CSSPEG::drop(CSSPEG::synMaybeSpace())
+		);
 		$value    = CSSPEG::first(CSSPEG::synExpr(), CSSPEG::synMaybeSpace()); // 値 「color:red」の「red」の部分
 
 		$declaration = CSSPEG::choice(
